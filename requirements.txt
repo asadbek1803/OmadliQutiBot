@@ -7,3 +7,4 @@ uvicorn
 requests
 django-unfold
 pillow
+APScheduler

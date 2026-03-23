@@ -5,3 +5,4 @@ psycopg2-binary
 django-environ
 uvicorn
 requests
+django-unfold

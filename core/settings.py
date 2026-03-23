@@ -104,7 +104,8 @@ WEBAPP_URL = env('WEBAPP_URL', default='')
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
     'https://*.ngrok.app',
-    'https://*.ngrok.io'
+    'https://*.ngrok.io',
+    "https://itopik.uz"
 ]
 if WEBHOOK_HOST and WEBHOOK_HOST.startswith('http'):
     CSRF_TRUSTED_ORIGINS.append(WEBHOOK_HOST)

@@ -1,0 +1,678 @@
+{% extends 'admin/unfold_dashboard.html' %}
+
+{% block title %}Admin Management{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    background: var(--bg-elevated);
+    color: var(--text-3);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+.admin-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 0.85rem;
+}
+
+.admin-table tr:hover td {
+    background: var(--bg-elevated);
+    color: var(--text-1);
+}
+
+.admin-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    margin-right: 0.5rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.status-badge.inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.status-badge.superuser {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-2);
+}
+
+.modal-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 0.4rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.6rem 0.9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-1);
+    font-family: inherit;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: var(--accent);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Admin Management</h1>
+        <p class="page-subtitle">Manage admin users and permissions</p>
+    </div>
+    <button class="btn btn-primary" onclick="openCreateAdminModal()">
+        <i class="fas fa-plus"></i> Add Admin
+    </button>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-top">
+            <div class="stat-icon-wrap blue">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i> 12%
+            </div>
+        </div>
+        <div class="stat-value" id="totalAdmins">0</div>
+        <div class="stat-label">Total Admins</div>
+    </div>
+    
+    <div class="stat-card green">
+        <div class="stat-top">
+            <div class="stat-icon-wrap green">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i> 8%
+            </div>
+        </div>
+        <div class="stat-value" id="activeAdmins">0</div>
+        <div class="stat-label">Active Admins</div>
+    </div>
+    
+    <div class="stat-card amber">
+        <div class="stat-top">
+            <div class="stat-icon-wrap amber">
+                <i class="fas fa-crown"></i>
+            </div>
+        </div>
+        <div class="stat-value" id="superusers">0</div>
+        <div class="stat-label">Superusers</div>
+    </div>
+    
+    <div class="stat-card purple">
+        <div class="stat-top">
+            <div class="stat-icon-wrap purple">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i> 15%
+            </div>
+        </div>
+        <div class="stat-value" id="totalUsers">0</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+</div>
+
+<!-- Admins Table -->
+<div class="card">
+    <div class="card-head">
+        <h3 class="card-title">Admin Users</h3>
+        <div class="d-flex gap-2">
+            <input type="text" id="adminSearch" placeholder="Search admins..." class="form-input" style="width: 200px;">
+            <button class="btn btn-ghost btn-sm" onclick="refreshAdmins()">
+                <i class="fas fa-sync"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p0">
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminsTableBody">
+                    <tr>
+                        <td colspan="6" class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Admin Modal -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h4 class="modal-title" id="adminModalTitle">Add New Admin</h4>
+            <button class="btn-close" onclick="closeAdminModal()"></button>
+        </div>
+        <div class="modal-body">
+            <form id="adminForm" class="modal-form">
+                <div class="form-group">
+                    <label for="adminUsername">Username *</label>
+                    <input type="text" id="adminUsername" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminEmail">Email *</label>
+                    <input type="email" id="adminEmail" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminFirstName">First Name</label>
+                    <input type="text" id="adminFirstName" name="first_name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminLastName">Last Name</label>
+                    <input type="text" id="adminLastName" name="last_name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPassword">Password *</label>
+                    <input type="password" id="adminPassword" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminTelegramId">Telegram ID</label>
+                    <input type="text" id="adminTelegramId" name="telegram_id">
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="adminIsSuperuser" name="is_superuser">
+                    <label for="adminIsSuperuser">Superuser (full access)</label>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="adminIsActive" name="is_active" checked>
+                    <label for="adminIsActive">Active</label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeAdminModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveAdmin()">Save Admin</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetPasswordModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h4 class="modal-title">Reset Password</h4>
+            <button class="btn-close" onclick="closeResetPasswordModal()"></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="newPassword">New Password *</label>
+                <input type="password" id="newPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password *</label>
+                <input type="password" id="confirmPassword" required>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeResetPasswordModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="resetPassword()">Reset Password</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentAdminId = null;
+let admins = [];
+
+// Load admin stats and list
+function loadAdminData() {
+    loadAdminStats();
+    loadAdmins();
+}
+
+function loadAdminStats() {
+    fetch('/rewards/admin/api/admins/stats/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                animateCount('totalAdmins', data.stats.total_admins);
+                animateCount('activeAdmins', data.stats.active_admins);
+                animateCount('superusers', data.stats.superusers);
+                animateCount('totalUsers', data.stats.total_users);
+            }
+        })
+        .catch(e => console.error('Stats loading error:', e));
+}
+
+function loadAdmins() {
+    fetch('/rewards/admin/api/admins/list/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                admins = data.admins;
+                renderAdmins();
+            }
+        })
+        .catch(e => console.error('Admins loading error:', e));
+}
+
+function renderAdmins() {
+    const tbody = document.getElementById('adminsTableBody');
+    const search = document.getElementById('adminSearch').value.toLowerCase();
+    
+    let filteredAdmins = admins;
+    if (search) {
+        filteredAdmins = admins.filter(admin => 
+            admin.username.toLowerCase().includes(search) ||
+            admin.email.toLowerCase().includes(search) ||
+            (admin.first_name && admin.first_name.toLowerCase().includes(search)) ||
+            (admin.last_name && admin.last_name.toLowerCase().includes(search))
+        );
+    }
+    
+    if (filteredAdmins.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty">
+                        <i class="fas fa-search"></i>
+                        <p>No admins found</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = filteredAdmins.map(admin => `
+        <tr>
+            <td>
+                <div class="user-info">
+                    <div class="user-avatar">${admin.username[0].toUpperCase()}</div>
+                    <div>
+                        <div class="user-cell-name">${admin.username}</div>
+                        <div class="user-cell-sub">ID: ${admin.telegram_id || 'N/A'}</div>
+                    </div>
+                </div>
+            </td>
+            <td>${admin.email}</td>
+            <td>
+                <span class="status-badge ${admin.is_superuser ? 'superuser' : 'active'}">
+                    ${admin.is_superuser ? 'Superuser' : 'Admin'}
+                </span>
+            </td>
+            <td>
+                <span class="status-badge ${admin.is_active ? 'active' : 'inactive'}">
+                    ${admin.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td>${admin.last_login ? formatDate(admin.last_login) : 'Never'}</td>
+            <td>
+                <div class="admin-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="editAdmin(${admin.id})" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="openResetPasswordModal(${admin.id})" title="Reset Password">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="toggleAdminStatus(${admin.id})" title="Toggle Status">
+                        <i class="fas fa-${admin.is_active ? 'pause' : 'play'}"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAdmin(${admin.id})" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openCreateAdminModal() {
+    currentAdminId = null;
+    document.getElementById('adminModalTitle').textContent = 'Add New Admin';
+    document.getElementById('adminForm').reset();
+    document.getElementById('adminModal').classList.add('open');
+}
+
+function editAdmin(adminId) {
+    currentAdminId = adminId;
+    const admin = admins.find(a => a.id === adminId);
+    if (!admin) return;
+    
+    document.getElementById('adminModalTitle').textContent = 'Edit Admin';
+    document.getElementById('adminUsername').value = admin.username;
+    document.getElementById('adminEmail').value = admin.email;
+    document.getElementById('adminFirstName').value = admin.first_name || '';
+    document.getElementById('adminLastName').value = admin.last_name || '';
+    document.getElementById('adminTelegramId').value = admin.telegram_id || '';
+    document.getElementById('adminPassword').value = ''; // Don't show current password
+    document.getElementById('adminIsSuperuser').checked = admin.is_superuser;
+    document.getElementById('adminIsActive').checked = admin.is_active;
+    
+    document.getElementById('adminModal').classList.add('open');
+}
+
+function closeAdminModal() {
+    document.getElementById('adminModal').classList.remove('open');
+    currentAdminId = null;
+}
+
+function saveAdmin() {
+    const form = document.getElementById('adminForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkbox values
+    data.is_superuser = formData.has('is_superuser');
+    data.is_active = formData.has('is_active');
+    
+    // Validate
+    if (!data.username || !data.email || (!currentAdminId && !data.password)) {
+        showToast('Please fill in all required fields', 'danger');
+        return;
+    }
+    
+    if (data.password && data.password.length < 8) {
+        showToast('Password must be at least 8 characters', 'danger');
+        return;
+    }
+    
+    const url = currentAdminId 
+        ? `/rewards/admin/api/admins/${currentAdminId}/`
+        : '/rewards/admin/api/admins/create/';
+    
+    const method = currentAdminId ? 'PUT' : 'POST';
+    
+    showLoader();
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(response => {
+        if (response.success) {
+            showToast(currentAdminId ? 'Admin updated successfully' : 'Admin created successfully', 'success');
+            closeAdminModal();
+            loadAdmins();
+            loadAdminStats();
+        } else {
+            showToast(response.error || 'Operation failed', 'danger');
+        }
+    })
+    .catch(e => {
+        console.error('Save admin error:', e);
+        showToast('An error occurred', 'danger');
+    })
+    .finally(() => {
+        hideLoader();
+    });
+}
+
+function deleteAdmin(adminId) {
+    const admin = admins.find(a => a.id === adminId);
+    if (!admin) return;
+    
+    if (!confirm(`Are you sure you want to delete admin "${admin.username}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    showLoader();
+    fetch(`/rewards/admin/api/admins/${adminId}/delete/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(r => r.json())
+    .then(response => {
+        if (response.success) {
+            showToast(response.message || 'Admin deleted successfully', 'success');
+            loadAdmins();
+            loadAdminStats();
+        } else {
+            showToast(response.error || 'Delete failed', 'danger');
+        }
+    })
+    .catch(e => {
+        console.error('Delete admin error:', e);
+        showToast('An error occurred', 'danger');
+    })
+    .finally(() => {
+        hideLoader();
+    });
+}
+
+function toggleAdminStatus(adminId) {
+    showLoader();
+    fetch(`/rewards/admin/api/admins/${adminId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(r => r.json())
+    .then(response => {
+        if (response.success) {
+            showToast(response.message, 'success');
+            loadAdmins();
+            loadAdminStats();
+        } else {
+            showToast(response.error || 'Toggle failed', 'danger');
+        }
+    })
+    .catch(e => {
+        console.error('Toggle status error:', e);
+        showToast('An error occurred', 'danger');
+    })
+    .finally(() => {
+        hideLoader();
+    });
+}
+
+function openResetPasswordModal(adminId) {
+    currentAdminId = adminId;
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('resetPasswordModal').classList.add('open');
+}
+
+function closeResetPasswordModal() {
+    document.getElementById('resetPasswordModal').classList.remove('open');
+    currentAdminId = null;
+}
+
+function resetPassword() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!newPassword || !confirmPassword) {
+        showToast('Please fill in all fields', 'danger');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        showToast('Password must be at least 8 characters', 'danger');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match', 'danger');
+        return;
+    }
+    
+    showLoader();
+    fetch(`/rewards/admin/api/admins/${currentAdminId}/reset-password/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ password: newPassword })
+    })
+    .then(r => r.json())
+    .then(response => {
+        if (response.success) {
+            showToast(response.message || 'Password reset successfully', 'success');
+            closeResetPasswordModal();
+        } else {
+            showToast(response.error || 'Reset failed', 'danger');
+        }
+    })
+    .catch(e => {
+        console.error('Reset password error:', e);
+        showToast('An error occurred', 'danger');
+    })
+    .finally(() => {
+        hideLoader();
+    });
+}
+
+function refreshAdmins() {
+    loadAdminData();
+    showToast('Admin list refreshed', 'info');
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Search functionality
+document.getElementById('adminSearch').addEventListener('input', renderAdmins);
+
+// Modal close handlers
+document.getElementById('adminModal').addEventListener('click', function(e) {
+    if (e.target === this) closeAdminModal();
+});
+
+document.getElementById('resetPasswordModal').addEventListener('click', function(e) {
+    if (e.target === this) closeResetPasswordModal();
+});
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdminData();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>OmadliQuti — Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-base:     #0b0f1a;
+            --bg-surface:  #121827;
+            --bg-elevated: #1a2236;
+            --bg-hover:    #1f2d45;
+            --border:      rgba(255,255,255,0.07);
+            --border-glow: rgba(99,179,237,0.3);
+            --text-1:      #e8eef8;
+            --text-2:      #8fa3bf;
+            --text-3:      #5a7295;
+            --accent:      #3b82f6;
+            --accent-2:    #8b5cf6;
+            --success:     #10b981;
+            --warning:     #f59e0b;
+            --danger:      #ef4444;
+            --info:        #06b6d4;
+            --gold:        #f59e0b;
+            --sidebar-w:   260px;
+            --header-h:    64px;
+            --radius:      12px;
+            --radius-sm:   8px;
+        }
+        [data-theme="light"] {
+            --bg-base:     #f0f4fc;
+            --bg-surface:  #ffffff;
+            --bg-elevated: #f8faff;
+            --bg-hover:    #edf2fb;
+            --border:      rgba(0,0,0,0.08);
+            --border-glow: rgba(59,130,246,0.3);
+            --text-1:      #0f172a;
+            --text-2:      #475569;
+            --text-3:      #94a3b8;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-1);
+            overflow-x: hidden;
+            transition: background 0.4s, color 0.4s;
+        }
+        ::selection { background: rgba(59,130,246,0.3); color: var(--text-1); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+        /* ─── Header ─────────────────────────────────────────── */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-h);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 200;
+            backdrop-filter: blur(12px);
+        }
+        .header-brand {
+            display: flex; align-items: center; gap: 0.75rem;
+            font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em;
+            color: var(--text-1);
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; color: #fff;
+            box-shadow: 0 0 20px rgba(59,130,246,0.4);
+        }
+        .header-right { display: flex; align-items: center; gap: 0.75rem; }
+        .header-badge {
+            background: rgba(59,130,246,0.15);
+            color: var(--accent);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 99px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .header-badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .icon-btn {
+            width: 38px; height: 38px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-2);
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--border-glow); }
+        .icon-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        /* ─── Sidebar ─────────────────────────────────────────── */
+        .sidebar {
+            position: fixed; top: var(--header-h); left: 0;
+            width: var(--sidebar-w);
+            height: calc(100vh - var(--header-h));
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto; overflow-x: hidden;
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.3s;
+            z-index: 100;
+        }
+        .sidebar.slim { width: 68px; }
+        .sidebar-nav { padding: 1rem 0.75rem; }
+        .nav-group { margin-bottom: 1.5rem; }
+        .nav-group-label {
+            font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--text-3);
+            padding: 0 0.75rem;
+            margin-bottom: 0.5rem;
+            white-space: nowrap; overflow: hidden;
+            transition: opacity 0.2s;
+        }
+        .sidebar.slim .nav-group-label { opacity: 0; }
+        .nav-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-2);
+            text-decoration: none;
+            font-size: 0.875rem; font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap; overflow: hidden;
+            position: relative;
+        }
+        .nav-link:hover { background: var(--bg-hover); color: var(--text-1); }
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.1));
+            color: var(--accent);
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .nav-link.active .nav-icon { color: var(--accent); }
+        .nav-icon { width: 20px; text-align: center; flex-shrink: 0; font-size: 0.9rem; }
+        .nav-text { transition: opacity 0.2s; }
+        .sidebar.slim .nav-text { opacity: 0; pointer-events: none; }
+        .nav-badge {
+            margin-left: auto; flex-shrink: 0;
+            background: var(--danger);
+            color: #fff;
+            font-size: 0.65rem; font-weight: 700;
+            padding: 2px 6px; border-radius: 99px;
+            min-width: 18px; text-align: center;
+        }
+        .sidebar.slim .nav-badge { display: none; }
+        .nav-sub {
+            padding-left: 2rem;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+        }
+        .nav-sub.open { max-height: 300px; }
+        .nav-sub .nav-link { font-size: 0.82rem; padding: 0.5rem 0.75rem; }
+        .sidebar.slim .nav-sub { display: none; }
+
+        /* ─── Main ────────────────────────────────────────────── */
+        .main {
+            margin-left: var(--sidebar-w);
+            margin-top: var(--header-h);
+            padding: 2rem;
+            min-height: calc(100vh - var(--header-h));
+            transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .main.expanded { margin-left: 68px; }
+
+        /* ─── Page Header ─────────────────────────────────────── */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.75rem;
+        }
+        .page-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text-1); }
+        .page-subtitle { font-size: 0.85rem; color: var(--text-2); margin-top: 2px; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem; font-weight: 600;
+            border: none; cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 0 20px rgba(59,130,246,0.3); }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 30px rgba(59,130,246,0.5); }
+        .btn-ghost { background: var(--bg-elevated); color: var(--text-2); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { background: #059669; transform: translateY(-1px); }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-info { background: var(--info); color: #fff; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+
+        /* ─── Stats Cards ─────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr; } }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: relative; overflow: hidden;
+            transition: all 0.3s;
+            cursor: default;
+            animation: fadeUp 0.5s ease both;
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.2s; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card::before {
+            content: ''; position: absolute;
+            inset: 0; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--border-glow); }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card.blue::before { background: radial-gradient(circle at 100% 0%, rgba(59,130,246,0.08) 0%, transparent 60%); }
+        .stat-card.green::before { background: radial-gradient(circle at 100% 0%, rgba(16,185,129,0.08) 0%, transparent 60%); }
+        .stat-card.amber::before { background: radial-gradient(circle at 100% 0%, rgba(245,158,11,0.08) 0%, transparent 60%); }
+        .stat-card.purple::before { background: radial-gradient(circle at 100% 0%, rgba(139,92,246,0.08) 0%, transparent 60%); }
+
+        .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .stat-icon-wrap {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .stat-icon-wrap.blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+        .stat-icon-wrap.green { background: rgba(16,185,129,0.15); color: var(--success); }
+        .stat-icon-wrap.amber { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .stat-icon-wrap.purple { background: rgba(139,92,246,0.15); color: var(--accent-2); }
+
+        .stat-trend {
+            font-size: 0.72rem; font-weight: 700;
+            padding: 3px 8px; border-radius: 99px;
+            display: flex; align-items: center; gap: 3px;
+        }
+        .stat-trend.up { background: rgba(16,185,129,0.15); color: var(--success); }
+        .stat-trend.down { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .stat-value {
+            font-size: 2rem; font-weight: 800; letter-spacing: -0.04em;
+            color: var(--text-1); margin-bottom: 0.25rem;
+            counter-reset: num;
+        }
+        .stat-label { font-size: 0.825rem; color: var(--text-2); font-weight: 500; }
+
+        /* ─── Cards ───────────────────────────────────────────── */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            animation: fadeUp 0.4s ease both;
+        }
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-1); }
+        .card-body { padding: 1.5rem; }
+        .card-body.p0 { padding: 0; }
+
+        /* ─── Grid Layouts ────────────────────────────────────── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; }
+        @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+        /* ─── Table ───────────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: var(--bg-elevated);
+            color: var(--text-3);
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.07em;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-2);
+            font-size: 0.85rem;
+            transition: background 0.15s;
+        }
+        tbody tr:hover td { background: var(--bg-elevated); color: var(--text-1); }
+        tbody tr:last-child td { border-bottom: none; }
+        td.bold { font-weight: 600; color: var(--text-1); }
+
+        /* ─── Badges ──────────────────────────────────────────── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 99px;
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+        .badge.pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge.pending::before { background: var(--warning); }
+        .badge.verified { background: rgba(6,182,212,0.15); color: var(--info); }
+        .badge.verified::before { background: var(--info); }
+        .badge.redeemed { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge.redeemed::before { background: var(--success); }
+        .badge.converted { background: rgba(139,92,246,0.15); color: var(--accent-2); }
+        .badge.converted::before { background: var(--accent-2); }
+        .badge.expired { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .badge.expired::before { background: var(--danger); }
+
+        /* ─── Code ────────────────────────────────────────────── */
+        code {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.78rem;
+            background: var(--bg-elevated);
+            padding: 2px 7px; border-radius: 5px;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        /* ─── Filter Tabs ─────────────────────────────────────── */
+        .filter-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .filter-tab {
+            padding: 0.4rem 1rem;
+            border-radius: 99px;
+            font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border);
+            background: var(--bg-elevated); color: var(--text-2);
+            transition: all 0.2s;
+        }
+        .filter-tab:hover { border-color: var(--border-glow); color: var(--text-1); }
+        .filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        /* ─── Loading Overlay ─────────────────────────────────── */
+        .loader {
+            position: fixed; inset: 0;
+            background: rgba(11,15,26,0.7);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 999;
+            transition: opacity 0.3s;
+        }
+        .loader.hidden { opacity: 0; pointer-events: none; }
+        .loader-inner {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem 3rem;
+            text-align: center;
+        }
+        .spinner {
+            width: 40px; height: 40px; margin: 0 auto 1rem;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-text { font-size: 0.85rem; color: var(--text-2); font-weight: 500; }
+
+        /* ─── Toast ───────────────────────────────────────────── */
+        .toast-container {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .toast {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.875rem 1.25rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            min-width: 280px; max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+            font-size: 0.875rem; font-weight: 500;
+        }
+        .toast.hide { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(20px) scale(0.95); } to { opacity: 1; transform: none; } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(20px) scale(0.95); } }
+        .toast-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .toast.success .toast-icon { background: rgba(16,185,129,0.15); color: var(--success); }
+        .toast.danger .toast-icon { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .toast.info .toast-icon { background: rgba(59,130,246,0.15); color: var(--accent); }
+        .toast-close { margin-left: auto; cursor: pointer; color: var(--text-3); padding: 2px; }
+        .toast-close:hover { color: var(--text-1); }
+        .toast-bar {
+            position: absolute; bottom: 0; left: 0; height: 2px;
+            border-radius: 0 0 0 var(--radius-sm);
+            animation: shrink 4s linear forwards;
+        }
+        .toast { position: relative; overflow: hidden; }
+        .toast.success .toast-bar { background: var(--success); }
+        .toast.danger .toast-bar { background: var(--danger); }
+        .toast.info .toast-bar { background: var(--accent); }
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
+
+        /* ─── Modal ───────────────────────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(11,15,26,0.75);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 800; padding: 1rem;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%; max-width: 480px;
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            overflow: hidden;
+        }
+        .modal-overlay.open .modal { transform: none; }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-title { font-size: 1rem; font-weight: 700; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 0.4rem; }
+        .form-input {
+            width: 100%; padding: 0.6rem 0.9rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-1); font-family: inherit; font-size: 0.875rem;
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+
+        /* ─── Empty State ─────────────────────────────────────── */
+        .empty {
+            text-align: center; padding: 3rem 2rem; color: var(--text-3);
+        }
+        .empty i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty p { font-size: 0.875rem; }
+
+        /* ─── Action buttons row ──────────────────────────────── */
+        .action-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+        /* ─── Chart wrapper ───────────────────────────────────── */
+        .chart-wrapper { height: 260px; position: relative; }
+
+        /* ─── Section ─────────────────────────────────────────── */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* ─── Responsive fixes ────────────────────────────────── */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .main { padding: 1rem; }
+        }
+
+        /* ─── Mini chart inside stat ──────────────────────────── */
+        .mini-bars {
+            display: flex; align-items: flex-end; gap: 3px;
+            height: 30px; margin-top: 0.75rem;
+        }
+        .mini-bar {
+            flex: 1; border-radius: 3px 3px 0 0;
+            background: currentColor; opacity: 0.2;
+            transition: opacity 0.2s, height 0.5s;
+        }
+        .stat-card:hover .mini-bar { opacity: 0.4; }
+
+        /* ─── User avatar ─────────────────────────────────────── */
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; color: #fff;
+            flex-shrink: 0;
+        }
+        .user-cell { display: flex; align-items: center; gap: 0.6rem; }
+        .user-cell-name { font-weight: 600; color: var(--text-1); font-size: 0.85rem; }
+        .user-cell-sub { font-size: 0.75rem; color: var(--text-3); }
+
+        /* ─── Skeleton loader ─────────────────────────────────── */
+        .skel {
+            background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-hover) 50%, var(--bg-elevated) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px; display: inline-block;
+        }
+        @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+        @media (max-width: 900px) { #wStatCards { grid-template-columns: repeat(2,1fr) !important; } }
+        @media (max-width: 480px) { #wStatCards { grid-template-columns: 1fr 1fr !important; } }
+        #wScreenshotDrop:hover { border-color: var(--accent) !important; color: var(--accent); }
+        #wScreenshotDrop.dragover { border-color: var(--success) !important; background: rgba(16,185,129,0.05); }
+        textarea.form-input { font-family: inherit; }
+    </style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="header">
+    <div class="header-brand">
+        <div class="brand-icon"><i class="fas fa-crown"></i></div>
+        OmadliQuti
+    </div>
+    <div class="header-right">
+        <div class="header-badge">Admin</div>
+        <div class="icon-btn" onclick="toggleTheme()" title="Mavzu o'zgartirish" id="themeBtn">
+            <i class="fas fa-moon"></i>
+        </div>
+        <div class="icon-btn" onclick="toggleSidebar()" title="Sidebar">
+            <i class="fas fa-bars-staggered"></i>
+        </div>
+    </div>
+</header>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+        <div class="nav-group">
+            <div class="nav-group-label">Asosiy</div>
+            <div class="nav-link active" onclick="nav('dashboard',this)">
+                <span class="nav-icon"><i class="fas fa-gauge-high"></i></span>
+                <span class="nav-text">Dashboard</span>
+            </div>
+            <div class="nav-link" onclick="nav('analytics',this)">
+                <span class="nav-icon"><i class="fas fa-chart-mixed"></i></span>
+                <span class="nav-text">Analitika</span>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Foydalanuvchilar</div>
+            <div class="nav-link" onclick="nav('users',this)">
+                <span class="nav-icon"><i class="fas fa-users"></i></span>
+                <span class="nav-text">Barchasi</span>
+            </div>
+            <div class="nav-link" onclick="nav('premium-users',this)">
+                <span class="nav-icon"><i class="fas fa-crown"></i></span>
+                <span class="nav-text">Premium</span>
+            </div>
+            <div class="nav-link" onclick="window.location.href='/rewards/admin/management/'">
+                <span class="nav-icon"><i class="fas fa-user-shield"></i></span>
+                <span class="nav-text">Adminlar</span>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Sovg'alar</div>
+            <div class="nav-link" id="premNavLink" onclick="toggleSub('premSub',this)">
+                <span class="nav-icon"><i class="fas fa-gift"></i></span>
+                <span class="nav-text">Premium Sovg'alar</span>
+                <span class="nav-badge" id="pendingBadge">0</span>
+            </div>
+            <div class="nav-sub" id="premSub">
+                <div class="nav-link" onclick="nav('premium-rewards',this); filterRewards('all')">
+                    <span class="nav-icon"><i class="fas fa-list"></i></span>
+                    <span class="nav-text">Barchasi</span>
+                </div>
+                <div class="nav-link" onclick="nav('premium-rewards',this); filterRewards('pending')">
+                    <span class="nav-icon"><i class="fas fa-clock"></i></span>
+                    <span class="nav-text">Kutilayotgan</span>
+                </div>
+                <div class="nav-link" onclick="nav('premium-rewards',this); filterRewards('verified')">
+                    <span class="nav-icon"><i class="fas fa-check-circle"></i></span>
+                    <span class="nav-text">Tasdiqlangan</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Moliya</div>
+            <div class="nav-link" onclick="nav('withdrawals',this);loadWithdrawals()">
+                <span class="nav-icon"><i class="fas fa-money-bill-transfer"></i></span>
+                <span class="nav-text">Pul Yechish</span>
+                <span class="nav-badge" id="wPendingBadge" style="display:none">0</span>
+            </div>
+            <div class="nav-link" onclick="nav('transactions',this)">
+                <span class="nav-icon"><i class="fas fa-arrows-rotate"></i></span>
+                <span class="nav-text">Tranzaksiyalar</span>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-label">Tizim</div>
+            <div class="nav-link" onclick="nav('settings',this)">
+                <span class="nav-icon"><i class="fas fa-sliders"></i></span>
+                <span class="nav-text">Sozlamalar</span>
+            </div>
+        </div>
+    </nav>
+</aside>
+
+<!-- ══════════ MAIN ══════════ -->
+<main class="main" id="main">
+
+    <!-- ── Dashboard ── -->
+    <div id="sec-dashboard" class="section active">
+        <div class="page-header">
+            <div>
+                <div class="page-title">Dashboard</div>
+                <div class="page-subtitle">Tizim umumiy ko'rsatkichlari</div>
+            </div>
+            <button class="btn btn-primary" onclick="refreshDashboard()"><i class="fas fa-arrows-rotate"></i> Yangilash</button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card blue">
+                <div class="stat-top">
+                    <div class="stat-icon-wrap blue"><i class="fas fa-users"></i></div>
+                    <div class="stat-trend up" id="trendUsers"><i class="fas fa-arrow-up"></i> 12%</div>
+                </div>
+                <div class="stat-value" id="statUsers">—</div>
+                <div class="stat-label">Jami Foydalanuvchilar</div>
+                <div class="mini-bars" id="miniUsers"></div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-top">
+                    <div class="stat-icon-wrap green"><i class="fas fa-coins"></i></div>
+                    <div class="stat-trend up" id="trendCoins"><i class="fas fa-arrow-up"></i> 8%</div>
+                </div>
+                <div class="stat-value" id="statCoins">—</div>
+                <div class="stat-label">Jami Coinlar</div>
+                <div class="mini-bars" id="miniCoins"></div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-top">
+                    <div class="stat-icon-wrap amber"><i class="fas fa-rotate"></i></div>
+                    <div class="stat-trend down" id="trendSpins"><i class="fas fa-arrow-down"></i> 3%</div>
+                </div>
+                <div class="stat-value" id="statSpins">—</div>
+                <div class="stat-label">Bugungi Spinlar</div>
+                <div class="mini-bars" id="miniSpins"></div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-top">
+                    <div class="stat-icon-wrap purple"><i class="fas fa-gift"></i></div>
+                    <div class="stat-trend up" id="trendPremium"><i class="fas fa-arrow-up"></i> 5 yangi</div>
+                </div>
+                <div class="stat-value" id="statPremium">—</div>
+                <div class="stat-label">Kutilayotgan Premium</div>
+                <div class="mini-bars" id="miniPremium"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-head">
+                <div class="card-title"><i class="fas fa-chart-line" style="color:var(--accent);margin-right:0.5rem"></i>Faollik Grafigi</div>
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="setPeriod('week',this)">Hafta</div>
+                    <div class="filter-tab" onclick="setPeriod('month',this)">Oy</div>
+                    <div class="filter-tab" onclick="setPeriod('year',this)">Yil</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-head">
+                    <div class="card-title"><i class="fas fa-rotate" style="color:var(--warning);margin-right:0.5rem"></i>Oxirgi Spinlar</div>
+                    <button class="btn btn-ghost btn-sm" onclick="loadRecentActivity()"><i class="fas fa-refresh"></i></button>
+                </div>
+                <div class="card-body p0 table-wrap">
+                    <table>
+                        <thead><tr><th>Foydalanuvchi</th><th>Sovg'a</th><th>Vaqt</th></tr></thead>
+                        <tbody id="tblSpins"><tr><td colspan="3" class="text-center" style="padding:2rem"><div class="skel" style="height:14px;width:60%;margin:auto"></div></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-head">
+                    <div class="card-title"><i class="fas fa-crown" style="color:var(--gold);margin-right:0.5rem"></i>Oxirgi Premium Sovg'alar</div>
+                    <button class="btn btn-ghost btn-sm" onclick="loadRecentPremium()"><i class="fas fa-refresh"></i></button>
+                </div>
+                <div class="card-body p0 table-wrap">
+                    <table>
+                        <thead><tr><th>Foydalanuvchi</th><th>Status</th><th>Vaqt</th></tr></thead>
+                        <tbody id="tblPremium"><tr><td colspan="3" style="padding:2rem;text-align:center"><div class="skel" style="height:14px;width:60%;margin:auto"></div></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Premium Rewards ── -->
+    <div id="sec-premium-rewards" class="section">
+        <div class="page-header">
+            <div>
+                <div class="page-title"><i class="fas fa-crown" style="color:var(--gold);margin-right:0.5rem"></i>Telegram Premium Sovg'alar</div>
+                <div class="page-subtitle" id="rewardsSubtitle">Yuklanmoqda…</div>
+            </div>
+            <button class="btn btn-primary" onclick="loadRewards()"><i class="fas fa-arrows-rotate"></i> Yangilash</button>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div class="filter-tabs" id="rewardFilters">
+                    <div class="filter-tab active" onclick="filterRewards('all',this)">Barchasi</div>
+                    <div class="filter-tab" onclick="filterRewards('pending',this)">⏳ Kutilayotgan</div>
+                    <div class="filter-tab" onclick="filterRewards('verified',this)">✅ Tasdiqlangan</div>
+                    <div class="filter-tab" onclick="filterRewards('redeemed',this)">🎁 Yechilgan</div>
+                    <div class="filter-tab" onclick="filterRewards('converted',this)">🔄 Konvertatsiya</div>
+                    <div class="filter-tab" onclick="filterRewards('expired',this)">❌ Muddati o'tgan</div>
+                </div>
+            </div>
+            <div class="card-body p0 table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Foydalanuvchi</th>
+                            <th>Oylar</th>
+                            <th>Coin qiymati</th>
+                            <th>Status</th>
+                            <th>Tasdiqlash kodi</th>
+                            <th>Muddati</th>
+                            <th>Vaqt</th>
+                            <th>Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblRewards">
+                        <tr><td colspan="9"><div class="empty"><i class="fas fa-circle-notch fa-spin"></i><p>Yuklanmoqda…</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Analytics ── -->
+    <div id="sec-analytics" class="section">
+        <div class="page-header">
+            <div><div class="page-title">Analitika</div><div class="page-subtitle">Batafsil statistika</div></div>
+        </div>
+        <div class="grid-3" style="margin-bottom:1.25rem">
+            <div class="card">
+                <div class="card-head"><div class="card-title">Spinlar taqsimoti</div></div>
+                <div class="card-body"><div class="chart-wrapper" style="height:180px"><canvas id="spinDoughnut"></canvas></div></div>
+            </div>
+            <div class="card" style="grid-column:span 2">
+                <div class="card-head"><div class="card-title">Kunlik yangi foydalanuvchilar</div></div>
+                <div class="card-body"><div class="chart-wrapper" style="height:180px"><canvas id="barUsers"></canvas></div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-head"><div class="card-title">Premium sovg'alar statistikasi</div></div>
+            <div class="card-body"><div class="chart-wrapper"><canvas id="premiumBar"></canvas></div></div>
+        </div>
+    </div>
+
+    <!-- ── Users ── -->
+    <div id="sec-users" class="section">
+        <div class="page-header">
+            <div><div class="page-title">Foydalanuvchilar</div><div class="page-subtitle">Tizim foydalanuvchilari ro'yxati</div></div>
+        </div>
+        <div class="card">
+            <div class="card-body p0 table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Jami coin</th><th>Qo'shilgan</th><th>Holat</th></tr></thead>
+                    <tbody id="tblUsers"><tr><td colspan="6"><div class="empty"><i class="fas fa-users"></i><p>Demo foydalanuvchilar</p></div></td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Withdrawals ── -->
+    <div id="sec-withdrawals" class="section">
+        <div class="page-header">
+            <div>
+                <div class="page-title"><i class="fas fa-money-bill-transfer" style="color:var(--success);margin-right:0.5rem"></i>Pul Yechish</div>
+                <div class="page-subtitle" id="wSubtitle">So'rovlar ro'yxati</div>
+            </div>
+            <button class="btn btn-primary" onclick="loadWithdrawals()"><i class="fas fa-arrows-rotate"></i> Yangilash</button>
+        </div>
+
+        <!-- Withdrawal Stats Row -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem" id="wStatCards">
+            <div class="stat-card amber" style="padding:1rem">
+                <div class="stat-top" style="margin-bottom:0.5rem">
+                    <div class="stat-icon-wrap amber" style="width:36px;height:36px;font-size:0.85rem"><i class="fas fa-clock"></i></div>
+                </div>
+                <div class="stat-value" id="wStatPending" style="font-size:1.5rem">—</div>
+                <div class="stat-label">Kutilayotgan</div>
+            </div>
+            <div class="stat-card green" style="padding:1rem">
+                <div class="stat-top" style="margin-bottom:0.5rem">
+                    <div class="stat-icon-wrap green" style="width:36px;height:36px;font-size:0.85rem"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="stat-value" id="wStatApproved" style="font-size:1.5rem">—</div>
+                <div class="stat-label">Tasdiqlangan</div>
+            </div>
+            <div class="stat-card blue" style="padding:1rem">
+                <div class="stat-top" style="margin-bottom:0.5rem">
+                    <div class="stat-icon-wrap blue" style="width:36px;height:36px;font-size:0.85rem"><i class="fas fa-circle-check"></i></div>
+                </div>
+                <div class="stat-value" id="wStatFulfilled" style="font-size:1.5rem">—</div>
+                <div class="stat-label">Bajarilgan</div>
+            </div>
+            <div class="stat-card" style="padding:1rem;background:var(--bg-surface);border:1px solid var(--border)">
+                <div class="stat-top" style="margin-bottom:0.5rem">
+                    <div class="stat-icon-wrap" style="width:36px;height:36px;font-size:0.85rem;background:rgba(245,158,11,0.15);color:var(--gold)"><i class="fas fa-coins"></i></div>
+                </div>
+                <div class="stat-value" id="wStatTotal" style="font-size:1.5rem;color:var(--gold)">—</div>
+                <div class="stat-label">Jami coin (so'rov)</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head" style="flex-wrap:wrap;gap:0.75rem">
+                <div class="filter-tabs" id="wFilters">
+                    <div class="filter-tab active" onclick="filterW('all',this)">Barchasi</div>
+                    <div class="filter-tab" onclick="filterW('pending',this)">⏳ Kutilayotgan</div>
+                    <div class="filter-tab" onclick="filterW('approved',this)">✅ Tasdiqlangan</div>
+                    <div class="filter-tab" onclick="filterW('fulfilled',this)">🏦 Bajarilgan</div>
+                    <div class="filter-tab" onclick="filterW('rejected',this)">❌ Rad etilgan</div>
+                </div>
+                <div style="display:flex;gap:0.5rem;margin-left:auto">
+                    <input class="form-input" id="wSearch" placeholder="Foydalanuvchi qidirish…" style="width:200px;padding:0.4rem 0.8rem;font-size:0.8rem" oninput="renderWithdrawals()">
+                </div>
+            </div>
+            <div class="card-body p0 table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Foydalanuvchi</th>
+                            <th>Karta</th>
+                            <th>Coin miqdori</th>
+                            <th>UZS</th>
+                            <th>Izoh</th>
+                            <th>Status</th>
+                            <th>Vaqt</th>
+                            <th>Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblWithdrawals">
+                        <tr><td colspan="9"><div class="empty"><i class="fas fa-circle-notch fa-spin"></i><p>Yuklanmoqda…</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Settings ── -->
+    <div id="sec-settings" class="section">
+        <div class="page-header"><div><div class="page-title">Sozlamalar</div></div></div>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-head"><div class="card-title">Tizim sozlamalari</div></div>
+                <div class="card-body">
+                    <div style="margin-bottom:1rem">
+                        <label class="form-label">Sayt nomi</label>
+                        <input class="form-input" value="OmadliQuti">
+                    </div>
+                    <div style="margin-bottom:1rem">
+                        <label class="form-label">Telegram Bot Token</label>
+                        <input class="form-input" type="password" value="••••••••••••••••••••">
+                    </div>
+                    <div style="margin-bottom:1.5rem">
+                        <label class="form-label">Premium tasdiqlov muddati (kun)</label>
+                        <input class="form-input" type="number" value="7">
+                    </div>
+                    <button class="btn btn-primary" onclick="showToast('Sozlamalar saqlandi!','success')"><i class="fas fa-save"></i> Saqlash</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-head"><div class="card-title">Ko'rinish</div></div>
+                <div class="card-body">
+                    <div style="margin-bottom:1rem">
+                        <label class="form-label">Mavzu</label>
+                        <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+                            <button class="btn btn-ghost" onclick="setTheme('dark')"><i class="fas fa-moon"></i> Qorong'i</button>
+                            <button class="btn btn-ghost" onclick="setTheme('light')"><i class="fas fa-sun"></i> Yorug'</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Sidebar holati</label>
+                        <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+                            <button class="btn btn-ghost" onclick="expandSidebar()"><i class="fas fa-expand"></i> Keng</button>
+                            <button class="btn btn-ghost" onclick="collapseSidebar()"><i class="fas fa-compress"></i> Tor</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Placeholder sections ── -->
+    <div id="sec-premium-users" class="section">
+        <div class="page-header"><div><div class="page-title">Premium Foydalanuvchilar</div></div></div>
+        <div class="card"><div class="card-body"><div class="empty"><i class="fas fa-crown"></i><p>Tez orada qo'shiladi</p></div></div></div>
+    </div>
+    <div id="sec-transactions" class="section">
+        <div class="page-header"><div><div class="page-title">Tranzaksiyalar</div></div></div>
+        <div class="card"><div class="card-body"><div class="empty"><i class="fas fa-arrows-rotate"></i><p>Tez orada qo'shiladi</p></div></div></div>
+    </div>
+</main>
+
+<!-- ══════════ LOADING ══════════ -->
+<div class="loader hidden" id="loader">
+    <div class="loader-inner">
+        <div class="spinner"></div>
+        <div class="loader-text">Yuklanmoqda…</div>
+    </div>
+</div>
+
+<!-- ══════════ MODAL ══════════ -->
+<div class="modal-overlay" id="actionModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">Tasdiqlash</div>
+            <div class="icon-btn" onclick="closeModal()"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:1rem">
+                <label class="form-label">Izoh (ixtiyoriy)</label>
+                <input class="form-input" id="modalNotes" placeholder="Admin izohi…">
+            </div>
+            <div id="modalInfo" style="font-size:0.875rem;color:var(--text-2)"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal()">Bekor qilish</button>
+            <button class="btn btn-primary" id="modalConfirmBtn">Tasdiqlash</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ SCREENSHOT MODAL ══════════ -->
+<div class="modal-overlay" id="screenshotModal">
+    <div class="modal" style="max-width:600px">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-image" style="color:var(--accent);margin-right:0.5rem"></i>Screenshot — So'rov #<span id="ssReqId"></span></div>
+            <div class="icon-btn" onclick="closeSSModal()"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="modal-body" style="padding:1rem">
+            <div id="ssImgWrap" style="text-align:center;min-height:200px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border-radius:var(--radius-sm);overflow:hidden">
+                <img id="ssImg" src="" alt="Screenshot" style="max-width:100%;max-height:450px;border-radius:var(--radius-sm);display:none">
+                <div id="ssImgLoader" style="color:var(--text-3)"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>
+                <div id="ssImgErr" style="display:none;color:var(--text-3)"><i class="fas fa-image-slash fa-2x"></i><p style="margin-top:0.5rem;font-size:0.85rem">Screenshot topilmadi</p></div>
+            </div>
+            <div id="ssInfo" style="margin-top:1rem;font-size:0.85rem;color:var(--text-2)"></div>
+        </div>
+        <div class="modal-footer">
+            <a id="ssDownload" href="#" download class="btn btn-ghost"><i class="fas fa-download"></i> Yuklab olish</a>
+            <button class="btn btn-ghost" onclick="closeSSModal()">Yopish</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ WITHDRAWAL ACTION MODAL ══════════ -->
+<div class="modal-overlay" id="wActionModal">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-header">
+            <div class="modal-title" id="wModalTitle">Amal</div>
+            <div class="icon-btn" onclick="closeWModal()"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="modal-body">
+            <div id="wModalDetails" style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;font-size:0.875rem"></div>
+            <div style="margin-bottom:1rem">
+                <label class="form-label">Admin izohi</label>
+                <textarea class="form-input" id="wModalComment" rows="3" placeholder="Izoh yozing (ixtiyoriy)…" style="resize:vertical"></textarea>
+            </div>
+            <div id="wModalScreenshotWrap" style="display:none;margin-bottom:1rem">
+                <label class="form-label">To'lov screenshoti yuklash</label>
+                <div id="wScreenshotDrop" onclick="document.getElementById('wScreenshotFile').click()"
+                    style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:1.5rem;text-align:center;cursor:pointer;transition:border-color 0.2s;color:var(--text-3)">
+                    <i class="fas fa-cloud-arrow-up" style="font-size:1.5rem;margin-bottom:0.5rem;display:block"></i>
+                    <div style="font-size:0.8rem">Rasm tanlash uchun bosing yoki tashlang</div>
+                    <div id="wScreenshotName" style="margin-top:0.5rem;font-size:0.78rem;color:var(--accent);display:none"></div>
+                </div>
+                <input type="file" id="wScreenshotFile" accept="image/*" style="display:none" onchange="handleScreenshotFile(this)">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeWModal()">Bekor qilish</button>
+            <button class="btn btn-primary" id="wModalConfirmBtn" onclick="executeWAction()">Tasdiqlash</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ TOASTS ══════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let allRewards = [];
+let currentFilter = 'all';
+let mainChart = null;
+let sidebarSlim = false;
+let pendingAction = null;
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('omad-theme') || 'dark';
+    setTheme(saved, false);
+    initMainChart();
+    refreshDashboard();
+    setTimeout(loadRecentActivity, 400);
+    setTimeout(() => {
+        loadRewards();
+        initAnalyticsCharts();
+        populateDemoUsers();
+        populateDemoWithdrawals();
+    }, 600);
+    // auto-refresh 30s
+    setInterval(() => { if(document.getElementById('sec-dashboard').classList.contains('active')) refreshDashboard(); }, 30000);
+    // drag-drop for screenshot upload
+    const drop = () => document.getElementById('wScreenshotDrop');
+    document.addEventListener('dragover', e => { if(drop() && document.getElementById('wActionModal').classList.contains('open')) { e.preventDefault(); drop().classList.add('dragover'); } });
+    document.addEventListener('dragleave', () => drop()?.classList.remove('dragover'));
+    document.addEventListener('drop', e => {
+        if(drop() && document.getElementById('wActionModal').classList.contains('open')) {
+            e.preventDefault(); drop().classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if(file && file.type.startsWith('image/')) {
+                const dt = new DataTransfer(); dt.items.add(file);
+                document.getElementById('wScreenshotFile').files = dt.files;
+                handleScreenshotFile(document.getElementById('wScreenshotFile'));
+            }
+        }
+    });
+});
+
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+function nav(id, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    if(el) el.classList.add('active');
+}
+function toggleSub(id, el) {
+    const sub = document.getElementById(id);
+    sub.classList.toggle('open');
+    nav('premium-rewards', null);
+    // mark parent active
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('sec-premium-rewards').classList.add('active');
+    document.querySelectorAll('.section').forEach(s => {
+        if(s.id !== 'sec-premium-rewards') s.classList.remove('active');
+    });
+}
+
+// ─────────────────────────────────────────
+// SIDEBAR
+// ─────────────────────────────────────────
+function toggleSidebar() {
+    sidebarSlim ? expandSidebar() : collapseSidebar();
+}
+function collapseSidebar() {
+    sidebarSlim = true;
+    document.getElementById('sidebar').classList.add('slim');
+    document.getElementById('main').classList.add('expanded');
+}
+function expandSidebar() {
+    sidebarSlim = false;
+    document.getElementById('sidebar').classList.remove('slim');
+    document.getElementById('main').classList.remove('expanded');
+}
+
+// ─────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────
+function toggleTheme() {
+    const curr = document.documentElement.getAttribute('data-theme');
+    setTheme(curr === 'dark' ? 'light' : 'dark');
+}
+function setTheme(t, save=true) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeBtn').innerHTML = t === 'dark'
+        ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    if(save) localStorage.setItem('omad-theme', t);
+    if(mainChart) updateChartTheme(t);
+}
+
+// ─────────────────────────────────────────
+// LOADER
+// ─────────────────────────────────────────
+function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
+function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
+
+// ─────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────
+function showToast(msg, type='info', duration=4000) {
+    const icons = { success:'check-circle', danger:'exclamation-circle', info:'info-circle' };
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `
+        <div class="toast-icon"><i class="fas fa-${icons[type]||'info-circle'}"></i></div>
+        <span>${msg}</span>
+        <span class="toast-close" onclick="this.closest('.toast').remove()"><i class="fas fa-times"></i></span>
+        <div class="toast-bar"></div>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('hide'); setTimeout(()=>t.remove(),400); }, duration);
+}
+
+// ─────────────────────────────────────────
+// MODAL
+// ─────────────────────────────────────────
+function openModal(title, info, action) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalInfo').innerHTML = info;
+    document.getElementById('modalNotes').value = '';
+    document.getElementById('actionModal').classList.add('open');
+    pendingAction = action;
+    const colors = { verify:'btn-info', redeem:'btn-success', convert:'btn-warning', reject:'btn-danger' };
+    const labels = { verify:'✅ Tasdiqlash', redeem:'🎁 Yechish', convert:'🔄 Coin ga o\'tkazish', reject:'❌ Rad etish' };
+    const btn = document.getElementById('modalConfirmBtn');
+    btn.className = 'btn ' + (colors[pendingAction?.actionType]||'btn-primary');
+    btn.textContent = labels[pendingAction?.actionType]||'Tasdiqlash';
+}
+function closeModal() {
+    document.getElementById('actionModal').classList.remove('open');
+    pendingAction = null;
+}
+document.getElementById('modalConfirmBtn').onclick = () => {
+    if(!pendingAction) return;
+    const notes = document.getElementById('modalNotes').value;
+    executePremiumAction(pendingAction.rewardId, pendingAction.actionType, notes);
+    closeModal();
+};
+document.getElementById('actionModal').addEventListener('click', e => {
+    if(e.target === e.currentTarget) closeModal();
+});
+
+// ─────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────
+function refreshDashboard() {
+    showLoader();
+    fetch('/rewards/rewards/api/admin/stats/')
+        .then(r => r.json())
+        .then(d => {
+            if(d.success) {
+                const s = d.stats;
+                animateCount('statUsers', s.total_users);
+                animateCount('statCoins', s.total_coins_earned);
+                animateCount('statSpins', s.today_spins||s.total_spins);
+                animateCount('statPremium', s.premium_rewards_pending||0);
+                document.getElementById('pendingBadge').textContent = s.premium_rewards_pending||0;
+                // also update withdrawal badge
+                const wp = s.pending_withdrawals||0;
+                const wbadge = document.getElementById('wPendingBadge');
+                wbadge.textContent = wp;
+                wbadge.style.display = wp > 0 ? 'inline-block' : 'none';
+                if(s.chart_data) updateMainChart(s.chart_data);
+            }
+        })
+        .catch(() => {
+            // Demo fallback
+            animateCount('statUsers', 1247);
+            animateCount('statCoins', 458200);
+            animateCount('statSpins', 83);
+            animateCount('statPremium', 7);
+            document.getElementById('pendingBadge').textContent = '7';
+            const wbadge2 = document.getElementById('wPendingBadge');
+            wbadge2.textContent = '3'; wbadge2.style.display = 'inline-block';
+            updateMainChart({
+                dates: getLast7Days(),
+                spins: [45,62,38,77,91,64,83],
+                users: [12,8,15,20,11,18,14]
+            });
+        })
+        .finally(() => {
+            hideLoader();
+            renderMiniBars();
+        });
+}
+
+function animateCount(id, target) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const start = parseInt(el.textContent.replace(/,/g,''))||0;
+    const diff = target - start;
+    const dur = 600;
+    const step = 16;
+    let elapsed = 0;
+    const t = setInterval(() => {
+        elapsed += step;
+        const prog = Math.min(elapsed/dur, 1);
+        const ease = 1 - Math.pow(1 - prog, 3);
+        el.textContent = Math.round(start + diff * ease).toLocaleString();
+        if(prog >= 1) clearInterval(t);
+    }, step);
+}
+
+function getLast7Days() {
+    return Array.from({length:7}, (_,i) => {
+        const d = new Date(); d.setDate(d.getDate() - (6-i));
+        return d.toLocaleDateString('uz-UZ',{month:'short',day:'numeric'});
+    });
+}
+
+function renderMiniBars() {
+    const sets = {
+        miniUsers: [30,45,38,60,50,70,65],
+        miniCoins: [55,40,70,60,80,75,85],
+        miniSpins: [80,60,75,50,40,55,65],
+        miniPremium: [20,30,25,40,35,30,45]
+    };
+    const colors = {
+        miniUsers:'var(--accent)', miniCoins:'var(--success)',
+        miniSpins:'var(--warning)', miniPremium:'var(--accent-2)'
+    };
+    Object.entries(sets).forEach(([id, vals]) => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        const max = Math.max(...vals);
+        el.style.color = colors[id];
+        el.innerHTML = vals.map(v => `<div class="mini-bar" style="height:${(v/max*100)}%"></div>`).join('');
+    });
+}
+
+// ─────────────────────────────────────────
+// MAIN CHART
+// ─────────────────────────────────────────
+function getChartColors() {
+    const t = document.documentElement.getAttribute('data-theme');
+    return { grid: t === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+             ticks: t === 'dark' ? '#5a7295' : '#94a3b8' };
+}
+
+function initMainChart() {
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    const c = getChartColors();
+    mainChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [
+            { label: 'Spinlar', data: [], borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', tension:0.4, pointRadius:4, pointHoverRadius:7, fill:true },
+            { label: 'Yangi foydalanuvchilar', data: [], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.08)', tension:0.4, pointRadius:4, pointHoverRadius:7, fill:true }
+        ]},
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: c.ticks, font:{family:'DM Sans',size:12}, padding:20 } },
+                       tooltip: { backgroundColor:'#1a2236', titleColor:'#e8eef8', bodyColor:'#8fa3bf', borderColor:'rgba(255,255,255,0.07)', borderWidth:1, cornerRadius:8, padding:10 } },
+            scales: { x: { grid:{color:c.grid}, ticks:{color:c.ticks} }, y: { grid:{color:c.grid}, ticks:{color:c.ticks} } },
+            interaction: { intersect: false, mode: 'index' }
+        }
+    });
+}
+
+function updateMainChart(data) {
+    if(!mainChart) return;
+    mainChart.data.labels = data.dates;
+    mainChart.data.datasets[0].data = data.spins;
+    mainChart.data.datasets[1].data = data.users;
+    mainChart.update('active');
+}
+
+function updateChartTheme(t) {
+    const c = getChartColors();
+    if(mainChart) {
+        mainChart.options.plugins.legend.labels.color = c.ticks;
+        mainChart.options.scales.x.grid.color = c.grid;
+        mainChart.options.scales.x.ticks.color = c.ticks;
+        mainChart.options.scales.y.grid.color = c.grid;
+        mainChart.options.scales.y.ticks.color = c.ticks;
+        mainChart.update();
+    }
+}
+
+function setPeriod(p, el) {
+    document.querySelectorAll('.filter-tabs .filter-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const mock = {
+        week: { dates: getLast7Days(), spins:[45,62,38,77,91,64,83], users:[12,8,15,20,11,18,14] },
+        month: { dates: Array.from({length:30},(_,i)=>`${i+1}-kun`), spins: Array.from({length:30},()=>Math.floor(Math.random()*100+20)), users: Array.from({length:30},()=>Math.floor(Math.random()*20+5)) },
+        year: { dates: ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'], spins:[800,950,1100,1020,1300,1250,1400,1320,1500,1600,1450,1700], users:[120,145,160,138,175,165,190,180,200,220,195,240] }
+    };
+    updateMainChart(mock[p]);
+    showToast(`${p === 'week' ? 'Haftalik' : p === 'month' ? 'Oylik' : 'Yillik'} statistika ko'rsatilmoqda`, 'info', 2000);
+}
+
+// ─────────────────────────────────────────
+// RECENT ACTIVITY
+// ─────────────────────────────────────────
+function loadRecentActivity() {
+    const mockSpins = [
+        { user:'Alisher', reward:'500 Coin', time:'2 min oldin' },
+        { user:'Malika', reward:'1000 Coin', time:'5 min oldin' },
+        { user:'Bobur', reward:'250 Coin', time:'12 min oldin' },
+        { user:'Zulfiya', reward:'Premium 1 oy', time:'20 min oldin' },
+        { user:'Jahongir', reward:'750 Coin', time:'35 min oldin' },
+    ];
+    const tb = document.getElementById('tblSpins');
+    tb.innerHTML = mockSpins.map((s,i) => `
+        <tr style="animation:fadeUp 0.3s ${i*0.05}s both">
+            <td><div class="user-cell"><div class="avatar">${s.user[0]}</div><div class="user-cell-name">${s.user}</div></div></td>
+            <td class="bold">${s.reward}</td>
+            <td style="color:var(--text-3)">${s.time}</td>
+        </tr>`).join('');
+}
+
+function loadRecentPremium() {
+    fetch('/rewards/rewards/api/premium-rewards/list/')
+        .then(r => r.json())
+        .then(d => {
+            if(d.success && d.rewards.length) {
+                const rows = d.rewards.slice(0,5);
+                document.getElementById('tblPremium').innerHTML = rows.map((r,i) => `
+                    <tr style="animation:fadeUp 0.3s ${i*0.05}s both">
+                        <td><div class="user-cell"><div class="avatar">${r.user[0].toUpperCase()}</div><div class="user-cell-name">${r.user}</div></div></td>
+                        <td><span class="badge ${r.status}">${statusText(r.status)}</span></td>
+                        <td style="color:var(--text-3)">${r.created_at}</td>
+                    </tr>`).join('');
+            } else renderMockPremium();
+        }).catch(() => renderMockPremium());
+}
+
+function renderMockPremium() {
+    const mock = [
+        { user:'Abdulloh', status:'pending', time:'1 soat oldin' },
+        { user:'Nargiza', status:'verified', time:'3 soat oldin' },
+        { user:'Timur', status:'redeemed', time:'Kecha' },
+        { user:'Sevinch', status:'converted', time:'2 kun oldin' },
+        { user:'Otabek', status:'expired', time:'5 kun oldin' },
+    ];
+    document.getElementById('tblPremium').innerHTML = mock.map((r,i) => `
+        <tr style="animation:fadeUp 0.3s ${i*0.05}s both">
+            <td><div class="user-cell"><div class="avatar">${r.user[0]}</div><div class="user-cell-name">${r.user}</div></div></td>
+            <td><span class="badge ${r.status}">${statusText(r.status)}</span></td>
+            <td style="color:var(--text-3)">${r.time}</td>
+        </tr>`).join('');
+}
+
+// ─────────────────────────────────────────
+// PREMIUM REWARDS
+// ─────────────────────────────────────────
+function loadRewards() {
+    showLoader();
+    fetch('/rewards/rewards/api/premium-rewards/list/')
+        .then(r => r.json())
+        .then(d => {
+            if(d.success) {
+                allRewards = d.rewards;
+                renderRewards();
+                loadRecentPremium();
+            } else throw new Error(d.error);
+        })
+        .catch(() => {
+            allRewards = getMockRewards();
+            renderRewards();
+            loadRecentPremium();
+        })
+        .finally(() => hideLoader());
+}
+
+function getMockRewards() {
+    return [
+        { id:1, user:'alisher_99', user_telegram_id:123456789, reward_name:'Telegram Premium 3 oy', months:3, coin_value:15000, status:'pending', verification_code:'PREM-A1B2', created_at:'23 Mar 2026 10:30', expires_at:'30 Mar 2026 10:30', is_expired:false, admin_notes:'' },
+        { id:2, user:'malika_uz', user_telegram_id:987654321, reward_name:'Telegram Premium 1 oy', months:1, coin_value:5000, status:'verified', verification_code:'PREM-C3D4', created_at:'22 Mar 2026 15:45', verified_at:'22 Mar 2026 16:00', expires_at:'29 Mar 2026 15:45', is_expired:false, admin_notes:'Tekshirildi' },
+        { id:3, user:'bobur_dev', user_telegram_id:111222333, reward_name:'Telegram Premium 6 oy', months:6, coin_value:28000, status:'redeemed', verification_code:null, created_at:'20 Mar 2026 08:00', expires_at:null, is_expired:false, admin_notes:'' },
+        { id:4, user:'zulfiya_2k', user_telegram_id:444555666, reward_name:'Telegram Premium 1 oy', months:1, coin_value:5000, status:'converted', verification_code:null, created_at:'18 Mar 2026 12:00', expires_at:null, is_expired:false, admin_notes:'' },
+        { id:5, user:'jahongir_t', user_telegram_id:777888999, reward_name:'Telegram Premium 3 oy', months:3, coin_value:15000, status:'expired', verification_code:'PREM-E5F6', created_at:'10 Mar 2026 09:00', expires_at:'17 Mar 2026 09:00', is_expired:true, admin_notes:'Muddati o\'tdi' },
+        { id:6, user:'kamola_uz', user_telegram_id:101010101, reward_name:'Telegram Premium 1 oy', months:1, coin_value:5000, status:'pending', verification_code:'PREM-G7H8', created_at:'23 Mar 2026 11:00', expires_at:'30 Mar 2026 11:00', is_expired:false, admin_notes:'' },
+    ];
+}
+
+function filterRewards(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('#rewardFilters .filter-tab').forEach(t => t.classList.remove('active'));
+    if(el) el.classList.add('active');
+    else { const tabs = document.querySelectorAll('#rewardFilters .filter-tab'); tabs[{all:0,pending:1,verified:2,redeemed:3,converted:4,expired:5}[f]||0].classList.add('active'); }
+    renderRewards();
+}
+
+function renderRewards() {
+    const filtered = currentFilter === 'all' ? allRewards : allRewards.filter(r => r.status === currentFilter);
+    const subtitle = `Jami: ${allRewards.length} ta | Ko'rsatilmoqda: ${filtered.length} ta`;
+    document.getElementById('rewardsSubtitle').textContent = subtitle;
+
+    const tb = document.getElementById('tblRewards');
+    if(!filtered.length) {
+        tb.innerHTML = `<tr><td colspan="9"><div class="empty"><i class="fas fa-inbox"></i><p>Hech qanday natija topilmadi</p></div></td></tr>`;
+        return;
+    }
+    tb.innerHTML = filtered.map((r,i) => `
+        <tr style="animation:fadeUp 0.25s ${i*0.04}s both" ${r.is_expired?'style="opacity:0.6"':''}>
+            <td><code>${r.id}</code></td>
+            <td>
+                <div class="user-cell">
+                    <div class="avatar">${r.user[0].toUpperCase()}</div>
+                    <div>
+                        <div class="user-cell-name">${r.user}</div>
+                        <div class="user-cell-sub">ID: ${r.user_telegram_id}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="bold">${r.months} oy</td>
+            <td class="bold" style="color:var(--gold)">${r.coin_value.toLocaleString()}</td>
+            <td><span class="badge ${r.status}">${statusText(r.status)}</span></td>
+            <td>${r.verification_code ? `<code>${r.verification_code}</code>` : '<span style="color:var(--text-3)">—</span>'}</td>
+            <td style="font-size:0.8rem">${r.expires_at||'—'}</td>
+            <td style="font-size:0.8rem;color:var(--text-3)">${r.created_at}</td>
+            <td><div class="action-btns">${actionBtns(r)}</div></td>
+        </tr>`).join('');
+}
+
+function actionBtns(r) {
+    let b = '';
+    if(r.status === 'pending')
+        b += `<button class="btn btn-info btn-sm" onclick="confirmAction(${r.id},'verify')"><i class="fas fa-check"></i></button>`;
+    if(r.status === 'verified' && !r.is_expired) {
+        b += `<button class="btn btn-success btn-sm" onclick="confirmAction(${r.id},'redeem')"><i class="fas fa-gift"></i></button>`;
+        b += `<button class="btn btn-warning btn-sm" onclick="confirmAction(${r.id},'convert')"><i class="fas fa-coins"></i></button>`;
+    }
+    if(!['expired','redeemed','converted'].includes(r.status))
+        b += `<button class="btn btn-danger btn-sm" onclick="confirmAction(${r.id},'reject')"><i class="fas fa-times"></i></button>`;
+    return b || '<span style="color:var(--text-3);font-size:0.8rem">—</span>';
+}
+
+function confirmAction(rewardId, actionType) {
+    const r = allRewards.find(x => x.id === rewardId);
+    if(!r) return;
+    const infos = {
+        verify: `<b>${r.user}</b> uchun <b>${r.months} oy</b> Telegram Premium tasdiqlashni xohlaysizmi?`,
+        redeem: `<b>${r.user}</b> uchun <b>${r.months} oy</b> Telegram Premiumni yechishni xohlaysizmi?`,
+        convert: `<b>${r.user}</b> uchun <b>${r.coin_value.toLocaleString()} coin</b>ga o'tkazishni xohlaysizmi?`,
+        reject: `<b>${r.user}</b> uchun sovg'ani <span style="color:var(--danger)">rad etishni</span> tasdiqlaysizmi?`
+    };
+    const titles = { verify:'Tasdiqlash', redeem:'Yechish', convert:'Coinga o\'tkazish', reject:'Rad etish' };
+    openModal(titles[actionType], infos[actionType], { rewardId, actionType });
+}
+
+function executePremiumAction(rewardId, action, notes) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    showLoader();
+    fetch('/rewards/rewards/api/premium-rewards/verify/', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ reward_id: rewardId, action, notes })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if(d.success) {
+            showToast('Amal muvaffaqiyatli bajarildi! ✓', 'success');
+            loadRewards();
+            refreshDashboard();
+        } else {
+            showToast(d.error || 'Xatolik yuz berdi', 'danger');
+            // demo: update local state
+            const idx = allRewards.findIndex(x => x.id === rewardId);
+            if(idx !== -1) {
+                const map = { verify:'verified', redeem:'redeemed', convert:'converted', reject:'expired' };
+                if(map[action]) allRewards[idx].status = map[action];
+                renderRewards();
+            }
+        }
+    })
+    .catch(() => {
+        // Demo mode: update local state
+        const idx = allRewards.findIndex(x => x.id === rewardId);
+        if(idx !== -1) {
+            const map = { verify:'verified', redeem:'redeemed', convert:'converted', reject:'expired' };
+            if(map[action]) allRewards[idx].status = map[action];
+            renderRewards();
+            showToast('Demo: ' + (map[action] || action) + ' bajarildi', 'success');
+        }
+    })
+    .finally(() => hideLoader());
+}
+
+function statusText(s) {
+    return { pending:'Kutilmoqda', verified:'Tasdiqlangan', redeemed:'Yechilgan', converted:'Konvertatsiya', expired:'Muddati o\'tgan' }[s] || s;
+}
+
+// ─────────────────────────────────────────
+// ANALYTICS CHARTS
+// ─────────────────────────────────────────
+function initAnalyticsCharts() {
+    // Doughnut
+    const dCtx = document.getElementById('spinDoughnut').getContext('2d');
+    new Chart(dCtx, {
+        type: 'doughnut',
+        data: { labels:['Coin','Premium','Jackpot','Bonus'], datasets:[{ data:[55,20,10,15], backgroundColor:['#3b82f6','#f59e0b','#10b981','#8b5cf6'], borderWidth:0, hoverOffset:6 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#8fa3bf', padding:14, font:{family:'DM Sans'} } } } }
+    });
+    // Bar users
+    const bCtx = document.getElementById('barUsers').getContext('2d');
+    new Chart(bCtx, {
+        type: 'bar',
+        data: { labels: getLast7Days(), datasets:[{ label:'Yangi foydalanuvchilar', data:[12,8,15,20,11,18,14], backgroundColor:'rgba(16,185,129,0.7)', borderRadius:6 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{grid:{display:false}, ticks:{color:'#5a7295'}}, y:{grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#5a7295'}} } }
+    });
+    // Premium bar
+    const pCtx = document.getElementById('premiumBar').getContext('2d');
+    new Chart(pCtx, {
+        type: 'bar',
+        data: { labels: getLast7Days(), datasets:[
+            { label:'Pending', data:[3,1,4,2,5,2,7], backgroundColor:'rgba(245,158,11,0.7)', borderRadius:4 },
+            { label:'Verified', data:[2,1,3,1,3,2,5], backgroundColor:'rgba(6,182,212,0.7)', borderRadius:4 },
+            { label:'Redeemed', data:[1,0,2,1,2,1,3], backgroundColor:'rgba(16,185,129,0.7)', borderRadius:4 },
+        ]},
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#8fa3bf', font:{family:'DM Sans'} } } }, scales:{ x:{grid:{display:false}, ticks:{color:'#5a7295'}}, y:{grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#5a7295'}}, x:{ stacked:false } } }
+    });
+}
+
+// ─────────────────────────────────────────
+// DEMO DATA
+// ─────────────────────────────────────────
+function populateDemoUsers() {
+    const users = [
+        {n:'Alisher Toshmatov', id:'123456789', coins:45200, joined:'15 Jan 2026', active:true},
+        {n:'Malika Yusupova', id:'987654321', coins:32100, joined:'20 Jan 2026', active:true},
+        {n:'Bobur Karimov', id:'111222333', coins:28500, joined:'1 Feb 2026', active:true},
+        {n:'Zulfiya Azimova', id:'444555666', coins:19800, joined:'10 Feb 2026', active:false},
+        {n:'Jahongir Tursunov', id:'777888999', coins:55600, joined:'5 Mar 2026', active:true},
+    ];
+    document.getElementById('tblUsers').innerHTML = users.map((u,i) => `
+        <tr style="animation:fadeUp 0.3s ${i*0.06}s both">
+            <td style="color:var(--text-3)">${i+1}</td>
+            <td><div class="user-cell"><div class="avatar">${u.n[0]}</div><div class="user-cell-name">${u.n}</div></div></td>
+            <td><code>${u.id}</code></td>
+            <td class="bold" style="color:var(--gold)">${u.coins.toLocaleString()}</td>
+            <td style="font-size:0.8rem;color:var(--text-3)">${u.joined}</td>
+            <td><span class="badge ${u.active?'verified':'expired'}">${u.active?'Faol':'Nofaol'}</span></td>
+        </tr>`).join('');
+}
+
+function populateDemoWithdrawals() { loadWithdrawals(); }
+
+// ─────────────────────────────────────────
+// WITHDRAWAL MANAGEMENT
+// ─────────────────────────────────────────
+let allWithdrawals = [];
+let wFilter = 'all';
+let wPendingAction = null;
+const COIN_RATE = 10; // 1 coin = 10 UZS (default)
+
+function loadWithdrawals() {
+    fetch('/rewards/withdrawals/api/list/')
+        .then(r => r.json())
+        .then(d => { if(d.success) { allWithdrawals = d.requests; renderWithdrawals(); } else throw 0; })
+        .catch(() => { allWithdrawals = getMockWithdrawals(); renderWithdrawals(); });
+}
+
+function getMockWithdrawals() {
+    return [
+        { id:101, user:'alisher_99', user_telegram_id:123456789, amount_coin:10000, status:'pending',
+          card_label:'Uzcard', masked_card:'**** 5678', holder_name:'ALISHER TOSHMATOV',
+          note:'Tezroq o\'tkazing', admin_comment:null, screenshot:null,
+          created_at:'23 Mar 2026 09:15', processed_at:null, processed_by:null },
+        { id:102, user:'malika_uz', user_telegram_id:987654321, amount_coin:5000, status:'approved',
+          card_label:'Humo', masked_card:'**** 1234', holder_name:'MALIKA YUSUPOVA',
+          note:null, admin_comment:'Tasdiqlandi', screenshot:null,
+          created_at:'22 Mar 2026 14:30', processed_at:'22 Mar 2026 15:00', processed_by:'admin' },
+        { id:103, user:'bobur_dev', user_telegram_id:111222333, amount_coin:25000, status:'fulfilled',
+          card_label:'Visa', masked_card:'**** 9012', holder_name:'BOBUR KARIMOV',
+          note:null, admin_comment:'To\'landi', screenshot:'/media/withdrawal_screenshots/demo.jpg',
+          created_at:'20 Mar 2026 10:00', processed_at:'20 Mar 2026 11:30', processed_by:'admin' },
+        { id:104, user:'zulfiya_2k', user_telegram_id:444555666, amount_coin:3000, status:'rejected',
+          card_label:'Uzcard', masked_card:'**** 3456', holder_name:'ZULFIYA AZIMOVA',
+          note:'Shoshilinch', admin_comment:'Karta ma\'lumotlari noto\'g\'ri', screenshot:null,
+          created_at:'19 Mar 2026 08:00', processed_at:'19 Mar 2026 09:00', processed_by:'admin' },
+        { id:105, user:'kamola_uz', user_telegram_id:101010101, amount_coin:15000, status:'pending',
+          card_label:'Humo', masked_card:'**** 7890', holder_name:'KAMOLA NAZAROVA',
+          note:null, admin_comment:null, screenshot:null,
+          created_at:'23 Mar 2026 11:45', processed_at:null, processed_by:null },
+        { id:106, user:'otabek_t', user_telegram_id:202020202, amount_coin:8000, status:'pending',
+          card_label:'Visa', masked_card:'**** 2468', holder_name:'OTABEK TURSUNOV',
+          note:'Iltimos tezroq', admin_comment:null, screenshot:null,
+          created_at:'23 Mar 2026 12:20', processed_at:null, processed_by:null },
+    ];
+}
+
+function filterW(f, el) {
+    wFilter = f;
+    document.querySelectorAll('#wFilters .filter-tab').forEach(t => t.classList.remove('active'));
+    if(el) el.classList.add('active');
+    renderWithdrawals();
+}
+
+function renderWithdrawals() {
+    const search = document.getElementById('wSearch')?.value.toLowerCase() || '';
+    let list = wFilter === 'all' ? allWithdrawals : allWithdrawals.filter(w => w.status === wFilter);
+    if(search) list = list.filter(w => w.user.toLowerCase().includes(search) || String(w.user_telegram_id).includes(search));
+
+    // Update stat cards
+    const counts = { pending:0, approved:0, fulfilled:0, rejected:0 };
+    let totalCoins = 0;
+    allWithdrawals.forEach(w => { counts[w.status] = (counts[w.status]||0)+1; totalCoins += w.amount_coin; });
+    animateCount('wStatPending', counts.pending);
+    animateCount('wStatApproved', counts.approved);
+    animateCount('wStatFulfilled', counts.fulfilled);
+    animateCount('wStatTotal', totalCoins);
+
+    document.getElementById('wSubtitle').textContent = `Ko'rsatilmoqda: ${list.length} ta | Jami: ${allWithdrawals.length} ta`;
+
+    const tb = document.getElementById('tblWithdrawals');
+    if(!list.length) {
+        tb.innerHTML = `<tr><td colspan="9"><div class="empty"><i class="fas fa-inbox"></i><p>Natija topilmadi</p></div></td></tr>`;
+        return;
+    }
+
+    tb.innerHTML = list.map((w,i) => {
+        const uzs = (w.amount_coin * COIN_RATE).toLocaleString();
+        const cardIcon = { Uzcard:'🟦', Humo:'🟥', Visa:'💳', Mastercard:'💳' }[w.card_label] || '💳';
+        return `
+        <tr style="animation:fadeUp 0.25s ${i*0.04}s both">
+            <td><code>${w.id}</code></td>
+            <td>
+                <div class="user-cell">
+                    <div class="avatar">${w.user[0].toUpperCase()}</div>
+                    <div>
+                        <div class="user-cell-name">${w.user}</div>
+                        <div class="user-cell-sub">ID: ${w.user_telegram_id}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div style="font-size:0.85rem;font-weight:600;color:var(--text-1)">${cardIcon} ${w.card_label||'—'} · ${w.masked_card||'—'}</div>
+                <div style="font-size:0.75rem;color:var(--text-3)">${w.holder_name||'—'}</div>
+            </td>
+            <td class="bold" style="color:var(--gold)">${w.amount_coin.toLocaleString()} <span style="font-size:0.75rem;font-weight:400;color:var(--text-3)">coin</span></td>
+            <td style="font-weight:600;color:var(--success)">${uzs} <span style="font-size:0.75rem;font-weight:400;color:var(--text-3)">so'm</span></td>
+            <td style="max-width:140px">
+                ${w.note ? `<div style="font-size:0.78rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px" title="${w.note}">${w.note}</div>` : '<span style="color:var(--text-3)">—</span>'}
+                ${w.admin_comment ? `<div style="font-size:0.75rem;color:var(--accent);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px" title="${w.admin_comment}"><i class="fas fa-comment-dots"></i> ${w.admin_comment}</div>` : ''}
+            </td>
+            <td><span class="badge ${wStatusClass(w.status)}">${wStatusText(w.status)}</span></td>
+            <td>
+                <div style="font-size:0.78rem;color:var(--text-2)">${w.created_at}</div>
+                ${w.processed_at ? `<div style="font-size:0.72rem;color:var(--text-3)">✓ ${w.processed_at}</div>` : ''}
+            </td>
+            <td>
+                <div class="action-btns">
+                    ${w.screenshot ? `<button class="btn btn-ghost btn-sm" onclick="viewScreenshot(${w.id})" title="Screenshotni ko'rish"><i class="fas fa-image"></i></button>` : ''}
+                    ${w.status === 'pending' ? `
+                        <button class="btn btn-success btn-sm" onclick="openWModal(${w.id},'approve')" title="Tasdiqlash"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="openWModal(${w.id},'reject')" title="Rad etish"><i class="fas fa-times"></i></button>
+                    ` : ''}
+                    ${w.status === 'approved' ? `
+                        <button class="btn btn-primary btn-sm" onclick="openWModal(${w.id},'fulfill')" title="Bajarildi deb belgilash"><i class="fas fa-circle-check"></i> Bajarildi</button>
+                    ` : ''}
+                    ${!['pending','approved'].includes(w.status) && !w.screenshot ? '<span style="color:var(--text-3);font-size:0.8rem">—</span>' : ''}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function wStatusClass(s) {
+    return { pending:'pending', approved:'verified', fulfilled:'redeemed', rejected:'expired' }[s] || 'pending';
+}
+function wStatusText(s) {
+    return { pending:'Kutilmoqda', approved:'Tasdiqlangan', fulfilled:'Bajarilgan', rejected:'Rad etilgan' }[s] || s;
+}
+
+// Screenshot modal
+function viewScreenshot(reqId) {
+    const w = allWithdrawals.find(x => x.id === reqId);
+    if(!w) return;
+    document.getElementById('ssReqId').textContent = reqId;
+    const img = document.getElementById('ssImg');
+    const loader = document.getElementById('ssImgLoader');
+    const err = document.getElementById('ssImgErr');
+    img.style.display = 'none'; loader.style.display = 'block'; err.style.display = 'none';
+
+    document.getElementById('ssInfo').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div><span style="color:var(--text-3)">Foydalanuvchi:</span> <b>${w.user}</b></div>
+            <div><span style="color:var(--text-3)">Miqdor:</span> <b style="color:var(--gold)">${w.amount_coin.toLocaleString()} coin</b></div>
+            <div><span style="color:var(--text-3)">Karta:</span> <b>${w.card_label||'—'} ${w.masked_card||''}</b></div>
+            <div><span style="color:var(--text-3)">Vaqt:</span> ${w.created_at}</div>
+        </div>`;
+
+    document.getElementById('screenshotModal').classList.add('open');
+
+    // Try loading image
+    img.onload = () => { loader.style.display = 'none'; img.style.display = 'block'; };
+    img.onerror = () => { loader.style.display = 'none'; err.style.display = 'flex'; err.style.flexDirection = 'column'; err.style.alignItems = 'center'; };
+    img.src = w.screenshot || '';
+    document.getElementById('ssDownload').href = w.screenshot || '#';
+}
+function closeSSModal() { document.getElementById('screenshotModal').classList.remove('open'); }
+document.getElementById('screenshotModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeSSModal(); });
+
+// Withdrawal action modal
+function openWModal(reqId, actionType) {
+    const w = allWithdrawals.find(x => x.id === reqId);
+    if(!w) return;
+    wPendingAction = { reqId, actionType };
+
+    const titles = { approve:'✅ So\'rovni tasdiqlash', reject:'❌ So\'rovni rad etish', fulfill:'🏦 Bajarildi deb belgilash' };
+    const colors = { approve:'btn-success', reject:'btn-danger', fulfill:'btn-primary' };
+    const labels = { approve:'Tasdiqlash', reject:'Rad etish', fulfill:'Bajarildi ✓' };
+
+    document.getElementById('wModalTitle').textContent = titles[actionType];
+    const btn = document.getElementById('wModalConfirmBtn');
+    btn.className = 'btn ' + colors[actionType];
+    btn.textContent = labels[actionType];
+
+    document.getElementById('wModalDetails').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;font-size:0.82rem">
+            <div><span style="color:var(--text-3)">Foydalanuvchi</span><div style="font-weight:600;margin-top:2px">${w.user}</div></div>
+            <div><span style="color:var(--text-3)">Telegram ID</span><div style="font-weight:600;margin-top:2px">${w.user_telegram_id}</div></div>
+            <div><span style="color:var(--text-3)">Coin miqdori</span><div style="font-weight:700;color:var(--gold);margin-top:2px">${w.amount_coin.toLocaleString()} coin</div></div>
+            <div><span style="color:var(--text-3)">UZS miqdori</span><div style="font-weight:700;color:var(--success);margin-top:2px">${(w.amount_coin*COIN_RATE).toLocaleString()} so'm</div></div>
+            <div style="grid-column:span 2"><span style="color:var(--text-3)">Karta</span><div style="font-weight:600;margin-top:2px">${w.card_label||'—'} · ${w.masked_card||'—'} · ${w.holder_name||'—'}</div></div>
+            ${w.note ? `<div style="grid-column:span 2"><span style="color:var(--text-3)">Foydalanuvchi izohi</span><div style="margin-top:2px;font-style:italic">${w.note}</div></div>` : ''}
+        </div>`;
+
+    document.getElementById('wModalComment').value = '';
+    // Show screenshot upload only for fulfill
+    document.getElementById('wModalScreenshotWrap').style.display = actionType === 'fulfill' ? 'block' : 'none';
+    document.getElementById('wScreenshotName').style.display = 'none';
+
+    document.getElementById('wActionModal').classList.add('open');
+}
+function closeWModal() { document.getElementById('wActionModal').classList.remove('open'); wPendingAction = null; }
+document.getElementById('wActionModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeWModal(); });
+
+function handleScreenshotFile(input) {
+    const file = input.files[0];
+    if(!file) return;
+    const nameEl = document.getElementById('wScreenshotName');
+    nameEl.textContent = '📎 ' + file.name;
+    nameEl.style.display = 'block';
+    document.getElementById('wScreenshotDrop').style.borderColor = 'var(--success)';
+}
+
+function executeWAction() {
+    if(!wPendingAction) return;
+    const { reqId, actionType } = wPendingAction;
+    const comment = document.getElementById('wModalComment').value;
+    const screenshotFile = document.getElementById('wScreenshotFile')?.files[0];
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    const statusMap = { approve:'approved', reject:'rejected', fulfill:'fulfilled' };
+    const newStatus = statusMap[actionType];
+
+    showLoader();
+    closeWModal();
+
+    // Build FormData for possible screenshot upload
+    const fd = new FormData();
+    fd.append('request_id', reqId);
+    fd.append('action', actionType);
+    fd.append('admin_comment', comment);
+    if(screenshotFile) fd.append('screenshot', screenshotFile);
+
+    fetch('/rewards/withdrawals/api/action/', { method:'POST', headers:{'X-CSRFToken':csrf}, body:fd })
+        .then(r => r.json())
+        .then(d => {
+            if(d.success) {
+                showToast(wActionSuccessMsg(actionType), 'success');
+                loadWithdrawals();
+            } else {
+                showToast(d.error || 'Xatolik yuz berdi', 'danger');
+                applyWLocalUpdate(reqId, newStatus, comment, screenshotFile);
+            }
+        })
+        .catch(() => {
+            // Demo mode
+            applyWLocalUpdate(reqId, newStatus, comment, screenshotFile);
+            showToast('Demo: ' + wActionSuccessMsg(actionType), 'success');
+        })
+        .finally(() => hideLoader());
+}
+
+function applyWLocalUpdate(reqId, newStatus, comment, file) {
+    const idx = allWithdrawals.findIndex(x => x.id === reqId);
+    if(idx !== -1) {
+        allWithdrawals[idx].status = newStatus;
+        allWithdrawals[idx].admin_comment = comment;
+        allWithdrawals[idx].processed_at = new Date().toLocaleDateString('uz-UZ',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        if(file) {
+            const url = URL.createObjectURL(file);
+            allWithdrawals[idx].screenshot = url;
+        }
+        renderWithdrawals();
+    }
+}
+
+function wActionSuccessMsg(a) {
+    return { approve:'So\'rov muvaffaqiyatli tasdiqlandi! ✓', reject:'So\'rov rad etildi', fulfill:'So\'rov bajarildi deb belgilandi 🏦' }[a] || 'Amal bajarildi';
+}
+</script>
+</body>
+</html>

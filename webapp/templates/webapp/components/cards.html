@@ -1,0 +1,38 @@
+<div class="p-3 mt-1">
+    <div class="row g-2">
+        <div class="col-6">
+            <div class="premium-card text-center h-100 d-flex flex-column justify-content-center align-items-center">
+                <i class="fa-solid fa-rotate mb-2 fs-5" style="color: var(--accent-gold);"></i>
+                <div class="small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Bugungi bepul</div>
+                <div class="fw-bold text-white"><span id="card-free-spins">0</span> ta mavjud</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="premium-card text-center h-100 d-flex flex-column justify-content-center align-items-center" onclick="navigateTo('wallet', document.querySelector('[onclick*=\'wallet\']'))">
+                <i class="fa-solid fa-wallet mb-2 fs-5" style="color: var(--accent-gold);"></i>
+                <div class="small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Jami coin</div>
+                <div class="fw-bold text-white"><span id="card-coin-balance">0</span></div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="premium-card text-center h-100 d-flex flex-column justify-content-center align-items-center" onclick="navigateTo('referral', document.querySelector('[onclick*=\'referral\']'))">
+                <i class="fa-solid fa-user-group mb-2 fs-5" style="color: var(--accent-gold);"></i>
+                <div class="small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Takliflar</div>
+                <div class="fw-bold text-white"><span id="card-ref-count">0</span> do'stlar</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="premium-card text-center h-100 d-flex flex-column justify-content-center align-items-center" onclick="navigateTo('tasks', document.querySelector('[onclick*=\'tasks\']'))">
+                <i class="fa-solid fa-list-check mb-2 fs-5" style="color: var(--accent-gold);"></i>
+                <div class="small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Topshiriqlar</div>
+                <div class="fw-bold text-white text-success small">Bonus kutmoqda</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button class="btn w-100 rounded-pill py-2 text-uppercase fw-bold" data-bs-toggle="modal" data-bs-target="#rewardsModal" style="background: rgba(244,197,66,0.05); border: 1px solid rgba(244,197,66,0.3); color: var(--accent-gold); font-size: 0.85rem; transition: var(--transition-base);">
+            <i class="fa-solid fa-circle-question me-2"></i> Mavjud Sovg'alar
+        </button>
+    </div>
+</div>

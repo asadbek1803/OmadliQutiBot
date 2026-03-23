@@ -1,0 +1,374 @@
+:root {
+    /* STRICT COLOR PALETTE */
+    --bg-main: #081120;
+    --bg-card: #0F1B2E;
+    --accent-gold: #F4C542;
+    --accent-gold-dark: #D4A017;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --danger: #EF4444;
+    --success: #22C55E;
+    --teal-muted: #14B8A6;
+
+    /* LAYOUT & SPACING */
+    --border-radius-lg: 20px;
+    --border-radius-md: 16px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* EFFECTS */
+    --transition-fast: 0.2s ease-out;
+    --transition-base: 0.3s ease-out;
+    --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --shadow-gold: 0 4px 20px rgba(244, 197, 66, 0.15);
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* UZBEK ORNAMENT BACKGROUND */
+.bg-ornament {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 250px;
+    /* Base64 subtle adras/atlas vector pattern could go here. For now a sleek radial grid serves as modern ornament */
+    background-image: radial-gradient(var(--text-secondary) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.03;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* PREMIUM CARDS */
+.premium-card {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: var(--transition-base);
+}
+
+.premium-card:active {
+    transform: scale(0.98);
+}
+
+/* HEADER PILLS */
+.header-pill {
+    background: var(--bg-card);
+    border: 1px solid rgba(244, 197, 66, 0.3);
+    border-radius: 50px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow-soft);
+}
+
+/* CTA BUTTON */
+.btn-gold {
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    font-weight: 700;
+    box-shadow: var(--shadow-gold);
+    transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+.btn-gold:active:not(:disabled), .btn-gold:hover:not(:disabled) {
+    transform: scale(0.96);
+    box-shadow: 0 2px 10px rgba(244, 197, 66, 0.3);
+}
+
+.btn-gold:disabled {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-gold-subtext {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+/* SPIN WHEEL */
+.wheel-wrapper {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: var(--space-xl) auto;
+    border-radius: 50%;
+    border: 4px solid var(--accent-gold);
+    box-shadow: 0 0 0 8px var(--bg-card), var(--shadow-gold);
+}
+
+.wheel-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+}
+
+/* ELEGANT POINTER */
+.wheel-pointer {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 32px;
+    background: var(--danger);
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+.wheel-pointer::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: var(--accent-gold);
+}
+
+/* BOTTOM NAVIGATION */
+.bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background-color: var(--bg-card);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.75rem;
+    gap: 4px;
+    transition: var(--transition-fast);
+}
+
+.nav-item i {
+    font-size: 1.25rem;
+}
+
+.nav-item.active {
+    color: var(--accent-gold);
+}
+
+/* COIN RAIN */
+#coin-rain-container {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.coin-drop {
+    position: absolute;
+    top: -5vh;
+    font-size: 1.5rem;
+    animation-name: coinFall;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+    opacity: 0.4;
+    filter: drop-shadow(0 2px 4px rgba(244, 197, 66, 0.4));
+}
+
+@keyframes coinFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.4; }
+    90% { opacity: 0.4; }
+    100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+}
+
+/* PAGE WRAPPERS */
+.page-layer {
+    padding-bottom: 80px; /* space for bottom nav */
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.d-none { display: none !important; }
+
+/* Notification Styles */
+.notification-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.notification-item.unread {
+    background: rgba(244,197,66,0.05);
+    border-left: 3px solid var(--accent-gold);
+}
+
+.notification-item.unread:hover {
+    background: rgba(244,197,66,0.1);
+}
+
+.notification-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.1);
+    font-size: 14px;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: white;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.notification-message {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.notification-time {
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+}
+
+.notification-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    margin-top: 8px;
+}
+
+/* Custom Notification Toast */
+.custom-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 400px;
+    background: rgba(30,30,46,0.95);
+    border: 1px solid rgba(244,197,66,0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.custom-notification.success {
+    border-color: rgba(16,185,129,0.3);
+}
+
+.custom-notification.error {
+    border-color: rgba(239,68,68,0.3);
+}
+
+.custom-notification.warning {
+    border-color: rgba(245,158,11,0.3);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    color: white;
+    font-size: 14px;
+}
+
+.custom-notification.success .notification-content {
+    color: #10b981;
+}
+
+.custom-notification.error .notification-content {
+    color: #ef4444;
+}
+
+.custom-notification.warning .notification-content {
+    color: #f59e0b;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Notification Badge Animation */
+#notification-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive Notifications */
+@media (max-width: 768px) {
+    #notification-dropdown {
+        min-width: 280px;
+        max-width: 320px;
+        right: -10px;
+    }
+    
+    .custom-notification {
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+}

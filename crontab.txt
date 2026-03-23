@@ -1,0 +1,39 @@
+# Django crontab configuration
+# Add to your crontab with: crontab -e
+
+# Option 1: Combined server + maintenance (recommended)
+# Runs server with built-in daily maintenance at 00:00
+@reboot cd "C:\Users\Lenovo\Desktop\OmadliQuti" && python manage.py runserver_with_maintenance --port 8000
+
+# Option 2: Separate server and maintenance
+# Start server on reboot
+@reboot cd "C:\Users\Lenovo\Desktop\OmadliQuti" && python manage.py runserver 0.0.0.0:8000
+
+# Daily maintenance at 00:00
+0 0 * * * cd "C:\Users\Lenovo\Desktop\OmadliQuti" && python manage.py daily_maintenance_with_scheduler
+
+# Option 3: Manual start with maintenance
+# Run this command manually to start server with maintenance
+# python manage.py runserver_with_maintenance --port 8000 --maintenance-time 00:00
+
+# Option 4: Backup only every 6 hours
+0 */6 * * * cd "C:\Users\Lenovo\Desktop\OmadliQuti" && python manage.py daily_maintenance --backup-only
+
+# Windows Task Scheduler Instructions:
+# 1. Open Task Scheduler
+# 2. Create Basic Task
+# 3. Set trigger to "At startup" or "At log on"
+# 4. Action: Start program
+# 5. Program: python
+# 6. Arguments: manage.py runserver_with_maintenance --port 8000
+# 7. Start in: C:\Users\Lenovo\Desktop\OmadliQuti
+# 8. Check "Run with highest privileges"
+# 9. Conditions: Uncheck "Stop if the computer switches to battery power"
+
+# Additional Task for Backup Only (optional):
+# 1. Create another Basic Task
+# 2. Set trigger to Daily at 12:00 AM
+# 3. Action: Start program
+# 4. Program: python
+# 5. Arguments: manage.py daily_maintenance --backup-only
+# 6. Start in: C:\Users\Lenovo\Desktop\OmadliQuti

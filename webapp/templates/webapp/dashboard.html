@@ -1,0 +1,151 @@
+{% extends 'webapp/base.html' %}
+
+{% block content %}
+    {% include 'webapp/components/header.html' %}
+    
+    <main id="content-area" class="page-layer position-relative pb-5">
+        <div id="coin-rain-container"></div>
+
+        <div id="page-dashboard" class="page position-relative z-1">
+            {% include 'webapp/components/wheel.html' %}
+            {% include 'webapp/components/cards.html' %}
+        </div>
+
+        <div id="page-wallet" class="page d-none">
+            <div class="p-4">
+                <h4 class="mb-4 fw-bold">Mening Hamyonim</h4>
+                <div class="premium-card text-center mb-4">
+                    <h6 class="text-secondary text-uppercase mb-1" style="letter-spacing:1px;font-size:0.75rem;">Umumiy Balans</h6>
+                    <h1 class="text-white fw-bolder mb-0" style="font-size: 3rem;">
+                        <i class="fa-solid fa-coins fs-4 mb-2" style="color: var(--accent-gold);"></i> <span id="wallet-balance-big">0</span>
+                    </h1>
+                    <p class="text-success small fw-bold mt-1 mb-0">~<span id="wallet-balance-uzs">0</span> UZS</p>
+                </div>
+
+                <button class="btn-gold w-100 mb-4 shadow-gold" onclick="navigateTo('withdraw')">
+                    PUL YECHIB OLISH
+                </button>
+
+                <div class="mt-4">
+                    <h6 class="text-secondary mb-3"><i class="fa-solid fa-clock-rotate-left"></i> Oxirgi amaliyotlar</h6>
+                    <div id="recent-activity-list" class="d-flex flex-column gap-2">
+                        <div class="premium-card p-3 text-center">
+                            <i class="fa-solid fa-ghost text-secondary fs-1 mb-2 opacity-50"></i>
+                            <p class="text-muted small mb-0">Hozircha o'tkazmalar yo'q</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="text-secondary mb-3"><i class="fa-solid fa-gift"></i> Telegram Premium Sovg'alari</h6>
+                    <div id="premium-rewards-list" class="d-flex flex-column gap-2">
+                        <div class="premium-card p-3 text-center">
+                            <i class="fa-solid fa-crown text-warning fs-1 mb-2 opacity-50"></i>
+                            <p class="text-muted small mb-0">Hozircha Premium so'rovlar yo'q</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="text-secondary mb-3"><i class="fa-solid fa-money-check"></i> Pul yechish so'rovlari</h6>
+                    <div id="withdrawal-status-list" class="d-flex flex-column gap-2">
+                        <div class="premium-card p-3 text-center">
+                            <i class="fa-solid fa-hourglass-half text-secondary fs-1 mb-2 opacity-50"></i>
+                            <p class="text-muted small mb-0">Hozircha so'rovlar yo'q</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-withdraw" class="page d-none">
+            <div class="p-4">
+                <h4 class="mb-4 fw-bold"><i class="fa-solid fa-arrow-up-right-from-square text-info"></i> Pul Yechish</h4>
+                <div class="premium-card mb-4" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <h6 class="text-info mb-2" style="color: var(--text-primary) !important;"><i class="fa-solid fa-circle-info text-warning"></i> Qoidalar</h6>
+                    <p class="small text-secondary mb-0">Accountingizda kamida <strong class="text-white">1000 Coin</strong> bo'lishi kerak.</p>
+                </div>
+
+                <form onsubmit="submitWithdraw(event)">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">Karta Turi</label>
+                        <select id="cardType" class="form-select bg-transparent text-white" style="border-color: rgba(255,255,255,0.1);">
+                            <option value="uzcard" class="text-dark">Uzcard</option>
+                            <option value="humo" class="text-dark">Humo</option>
+                            <option value="visa" class="text-dark">Visa</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">Karta Raqami</label>
+                        <input type="text" id="cardNumber" class="form-control bg-transparent text-white" style="border-color: rgba(255,255,255,0.1);" placeholder="8600 **** **** 1234" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small">Karta Egasi I-F</label>
+                        <input type="text" id="cardHolder" class="form-control bg-transparent text-white" style="border-color: rgba(255,255,255,0.1);" placeholder="Aziz Raxmonov" required>
+                    </div>
+                    <button type="submit" class="btn btn-gold w-100 shadow-gold" id="btn-withdraw">Yuborish</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="page-referral" class="page d-none">
+            <div class="p-4 text-center">
+                <div class="premium-card p-4 mt-2 mb-4 text-center">
+                    <i class="fa-solid fa-user-plus fs-1 mb-3" style="color: var(--success);"></i>
+                    <h4 class="fw-bold mb-2">Taklif Qil & Ishla</h4>
+                    <p class="text-secondary small mb-0">Do'stingiz uchun <span class="fw-bold" style="color: var(--accent-gold);">100 Coin</span> oling!</p>
+                </div>
+
+                <div class="text-start mb-4">
+                    <label class="form-label text-secondary small ms-2">Shaxsiy Taklif Havolangiz:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-transparent text-white border-end-0" style="border-color: rgba(255,255,255,0.1);" id="ref-link" readonly>
+                        <button class="btn border-start-0" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--accent-gold);" type="button" onclick="copyRef()">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-leaders" class="page d-none">
+            <div class="p-4">
+                <h4 class="mb-4 fw-bold text-center"><i class="fa-solid fa-trophy" style="color: var(--accent-gold);"></i> Reyting</h4>
+                <div class="premium-card p-0">
+                    <ul class="list-group list-group-flush" id="leaders-list" style="background: transparent;">
+                        <li class="list-group-item text-center text-secondary bg-transparent border-0">Yuklanmoqda...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-tasks" class="page d-none">
+            <div class="p-4">
+                <h4 class="mb-4 fw-bold"><i class="fa-solid fa-list-check" style="color: var(--accent-gold);"></i> Vazifalar</h4>
+                <p class="small text-secondary mb-4">Topshiriqlarni bajarib, qo'shimcha tangalarga ega bo'ling!</p>
+                <div id="tasks-list-container" class="d-flex flex-column gap-3">
+                    <div class="text-center text-secondary py-3">Yuklanmoqda...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'webapp/components/bottom_nav.html' %}
+{% endblock %}
+
+{% block modals %}
+    <div class="modal fade" id="rewardsModal" tabindex="-1" aria-hidden="true" style="z-index: 9999;">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable px-3">
+            <div class="modal-content premium-card text-white shadow-soft" style="border: 1px solid rgba(244,197,66,0.2);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color: var(--accent-gold);"><i class="fa-solid fa-gift me-2"></i> Sovg'alar</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Yopish"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-secondary small mb-3">Mavjud yutuqlar:</p>
+                    <div class="row g-2" id="reward-catalog"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

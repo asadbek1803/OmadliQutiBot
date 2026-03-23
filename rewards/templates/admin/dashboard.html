@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>OmadliQuti Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #f4c525;
+            --secondary-color: #1a1a2e;
+            --accent-color: #16213e;
+            --text-light: #e8e8e8;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            border-right: 1px solid rgba(244, 197, 37, 0.2);
+            padding: 2rem 1rem;
+        }
+
+        .sidebar .nav-link {
+            color: var(--text-light);
+            padding: 0.8rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(244, 197, 37, 0.1);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(244, 197, 37, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .stat-card .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card.primary .stat-icon {
+            background: linear-gradient(135deg, var(--primary-color), #f8d568);
+            color: var(--secondary-color);
+        }
+
+        .stat-card.success .stat-icon {
+            background: linear-gradient(135deg, var(--success-color), #34ce57);
+            color: white;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: linear-gradient(135deg, var(--warning-color), #ffcd38);
+            color: var(--secondary-color);
+        }
+
+        .stat-card.danger .stat-icon {
+            background: linear-gradient(135deg, var(--danger-color), #e4606d);
+            color: white;
+        }
+
+        .stat-card.info .stat-icon {
+            background: linear-gradient(135deg, var(--info-color), #5bc0de);
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .table-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .table-card h5 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+
+        .table-dark {
+            background: transparent;
+        }
+
+        .table-dark th,
+        .table-dark td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+
+        .badge-pending {
+            background: var(--warning-color);
+            color: var(--secondary-color);
+        }
+
+        .badge-verified {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .badge-redeemed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .badge-converted {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+        }
+
+        .badge-expired {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.8rem;
+            margin: 0.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-verify {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .btn-redeem {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-convert {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+        }
+
+        .btn-reject {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            height: 300px;
+        }
+
+        .header-title {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title i {
+            font-size: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                padding: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <h4 class="text-center mb-4" style="color: var(--primary-color);">
+                    <i class="fas fa-crown"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="#premium-rewards" onclick="showSection('premium-rewards')">
+                        <i class="fas fa-gift me-2"></i> Premium Sovg'alar
+                    </a>
+                    <a class="nav-link" href="#users" onclick="showSection('users')">
+                        <i class="fas fa-users me-2"></i> Foydalanuvchilar
+                    </a>
+                    <a class="nav-link" href="#withdrawals" onclick="showSection('withdrawals')">
+                        <i class="fas fa-money-check me-2"></i> Pul Yechish
+                    </a>
+                    <a class="nav-link" href="#tasks" onclick="showSection('tasks')">
+                        <i class="fas fa-tasks me-2"></i> Vazifalar
+                    </a>
+                    <a class="nav-link" href="#settings" onclick="showSection('settings')">
+                        <i class="fas fa-cog me-2"></i> Sozlamalar
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Dashboard Section -->
+                <div id="dashboard-section" class="content-section">
+                    <h2 class="header-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </h2>
+
+                    <!-- Stats Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card primary">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-number" id="total-users">{{ total_users }}</div>
+                                <div class="stat-label">Jami Foydalanuvchilar</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card success">
+                                <div class="stat-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div class="stat-number" id="total-coins">{{ total_coins_earned|default:0 }}</div>
+                                <div class="stat-label">Jami Coinlar</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card warning">
+                                <div class="stat-icon">
+                                    <i class="fas fa-sync"></i>
+                                </div>
+                                <div class="stat-number" id="today-spins">{{ today_spins }}</div>
+                                <div class="stat-label">Bugungi Spinlar</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card info">
+                                <div class="stat-icon">
+                                    <i class="fas fa-gift"></i>
+                                </div>
+                                <div class="stat-number" id="premium-pending">{{ premium_rewards_pending }}</div>
+                                <div class="stat-label">Kutilayotgan Premium</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="chart-container">
+                                <h5 style="color: var(--primary-color); margin-bottom: 1rem;">Oxirgi 7 kun statistikasi</h5>
+                                <canvas id="statsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activities -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="table-card">
+                                <h5><i class="fas fa-history me-2"></i> Oxirgi Spinlar</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Foydalanuvchi</th>
+                                                <th>Sov'ga</th>
+                                                <th>Vaqt</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for spin in recent_spins %}
+                                            <tr>
+                                                <td>{{ spin.user.username }}</td>
+                                                <td>{{ spin.reward.name }}</td>
+                                                <td>{{ spin.created_at|date:"H:i" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="table-card">
+                                <h5><i class="fas fa-money-check me-2"></i> Oxirgi Yechishlar</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Foydalanuvchi</th>
+                                                <th>Miqdor</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for withdrawal in recent_withdrawals %}
+                                            <tr>
+                                                <td>{{ withdrawal.user.username }}</td>
+                                                <td>{{ withdrawal.amount_coin }}</td>
+                                                <td>
+                                                    <span class="badge badge-{{ withdrawal.status }}">
+                                                        {{ withdrawal.get_status_display }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Premium Rewards Section -->
+                <div id="premium-rewards-section" class="content-section" style="display: none;">
+                    <h2 class="header-title">
+                        <i class="fas fa-gift"></i>
+                        Telegram Premium Sovg'alar
+                    </h2>
+
+                    <div class="table-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Barcha Premium Sovg'alar</h5>
+                            <button class="btn btn-sm btn-warning" onclick="loadPremiumRewards()">
+                                <i class="fas fa-sync me-1"></i> Yangilash
+                            </button>
+                        </div>
+                        
+                        <div class="loading-spinner" id="premium-loading">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Yuklanmoqda...</span>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-dark" id="premium-rewards-table">
+                                <thead>
+                                    <tr>
+                                        <th>Foydalanuvchi</th>
+                                        <th>Sov'ga</th>
+                                        <th>Oylar</th>
+                                        <th>Coin Qiymati</th>
+                                        <th>Status</th>
+                                        <th>Tasdiqlash Kodi</th>
+                                        <th>Yaratilgan</th>
+                                        <th>Amal Qiladi</th>
+                                        <th>Amallar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other sections (users, withdrawals, tasks, settings) would go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Reward Action Modal -->
+    <div class="modal fade" id="premiumActionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--secondary-color); border: 1px solid var(--primary-color);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" style="color: var(--primary-color);">Premium Sovg'asi Amali</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Izoh (ixtiyoriy)</label>
+                        <textarea class="form-control" id="adminNotes" rows="3" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                    <div id="modalActions">
+                        <!-- Dynamic action buttons -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let currentRewardId = null;
+        let statsChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            initChart();
+            loadPremiumRewards();
+        });
+
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(section + '-section').style.display = 'block';
+            
+            // Update active nav
+            document.querySelectorAll('.sidebar .nav-link').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelector(`[href="#${section}"]`).classList.add('active');
+            
+            // Load section-specific data
+            if (section === 'premium-rewards') {
+                loadPremiumRewards();
+            }
+        }
+
+        function loadStats() {
+            fetch('/rewards/api/admin/stats/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateStatsDisplay(data.stats);
+                        updateChart(data.stats.chart_data);
+                    }
+                })
+                .catch(error => console.error('Stats loading error:', error));
+        }
+
+        function updateStatsDisplay(stats) {
+            document.getElementById('total-users').textContent = stats.total_users.toLocaleString();
+            document.getElementById('total-coins').textContent = Math.round(stats.total_coins_earned).toLocaleString();
+            document.getElementById('today-spins').textContent = stats.today_spins.toLocaleString();
+            document.getElementById('premium-pending').textContent = stats.premium_rewards_pending.toLocaleString();
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            statsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Spinlar',
+                        data: [],
+                        borderColor: '#f4c525',
+                        backgroundColor: 'rgba(244, 197, 37, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Yangi Foydalanuvchilar',
+                        data: [],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e8e8e8'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e8e8e8'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e8e8e8'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(chartData) {
+            if (statsChart) {
+                statsChart.data.labels = chartData.dates;
+                statsChart.data.datasets[0].data = chartData.spins;
+                statsChart.data.datasets[1].data = chartData.users;
+                statsChart.update();
+            }
+        }
+
+        function loadPremiumRewards() {
+            const loading = document.getElementById('premium-loading');
+            const tbody = document.querySelector('#premium-rewards-table tbody');
+            
+            loading.style.display = 'block';
+            tbody.innerHTML = '';
+
+            fetch('/rewards/api/premium-rewards/list/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayPremiumRewards(data.rewards);
+                    }
+                })
+                .catch(error => console.error('Premium rewards loading error:', error))
+                .finally(() => {
+                    loading.style.display = 'none';
+                });
+        }
+
+        function displayPremiumRewards(rewards) {
+            const tbody = document.querySelector('#premium-rewards-table tbody');
+            tbody.innerHTML = '';
+
+            rewards.forEach(reward => {
+                const statusClass = `badge-${reward.status}`;
+                const expiredClass = reward.is_expired ? 'text-danger' : '';
+                
+                const row = `
+                    <tr class="${expiredClass}">
+                        <td>
+                            <div>${reward.user}</div>
+                            <small class="text-muted">ID: ${reward.user_telegram_id}</small>
+                        </td>
+                        <td>${reward.reward_name}</td>
+                        <td>${reward.months}</td>
+                        <td>${reward.coin_value}</td>
+                        <td>
+                            <span class="badge ${statusClass}">
+                                ${getStatusText(reward.status)}
+                            </span>
+                        </td>
+                        <td>
+                            <code>${reward.verification_code || '-'}</code>
+                        </td>
+                        <td>${reward.created_at}</td>
+                        <td>${reward.expires_at || '-'}</td>
+                        <td>
+                            ${getActionButtons(reward)}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Kutilmoqda',
+                'verified': 'Tasdiqlangan',
+                'redeemed': 'Yechilgan',
+                'converted': 'Konvertatsiya qilingan',
+                'expired': 'Muddati o\'tgan'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getActionButtons(reward) {
+            console.log('Getting action buttons for reward:', reward); // Debug log
+            let buttons = '';
+            
+            if (reward.status === 'pending') {
+                buttons += `<button class="action-btn btn-verify" onclick="showPremiumAction('${reward.id}', 'verify')">Tasdiqlash</button>`;
+            }
+            
+            if (reward.status === 'verified' && !reward.is_expired) {
+                buttons += `<button class="action-btn btn-redeem" onclick="showPremiumAction('${reward.id}', 'redeem')">Yechish</button>`;
+                buttons += `<button class="action-btn btn-convert" onclick="showPremiumAction('${reward.id}', 'convert')">Coin ga</button>`;
+            }
+            
+            if (reward.status !== 'expired' && reward.status !== 'redeemed' && reward.status !== 'converted') {
+                buttons += `<button class="action-btn btn-reject" onclick="showPremiumAction('${reward.id}', 'reject')">Rad etish</button>`;
+            }
+            
+            console.log('Generated buttons:', buttons); // Debug log
+            return buttons;
+        }
+
+        function showPremiumAction(rewardId, action) {
+            currentRewardId = rewardId;
+            
+            const modal = new bootstrap.Modal(document.getElementById('premiumActionModal'));
+            const actionsContainer = document.getElementById('modalActions');
+            
+            let actionButtons = '';
+            const actionLabels = {
+                'verify': 'Tasdiqlash',
+                'redeem': 'Yechish',
+                'convert': 'Coin ga aylantirish',
+                'reject': 'Rad etish'
+            };
+            
+            const actionClasses = {
+                'verify': 'btn-info',
+                'redeem': 'btn-success',
+                'convert': 'btn-warning',
+                'reject': 'btn-danger'
+            };
+            
+            actionButtons = `<button type="button" class="btn ${actionClasses[action]}" onclick="executePremiumAction('${action}')">${actionLabels[action]}</button>`;
+            
+            actionsContainer.innerHTML = actionButtons;
+            modal.show();
+        }
+
+        function executePremiumAction(action) {
+            const notes = document.getElementById('adminNotes').value;
+            const csrfToken = getCsrfToken();
+            
+            console.log('Executing action:', action, 'for reward:', currentRewardId, 'CSRF:', csrfToken); // Debug log
+            
+            fetch('/rewards/api/premium-rewards/verify/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    reward_id: currentRewardId,
+                    action: action,
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('premiumActionModal')).hide();
+                    document.getElementById('adminNotes').value = '';
+                    loadPremiumRewards();
+                    loadStats(); // Refresh stats
+                    showNotification('Amal muvaffaqiyatli bajarildi!', 'success');
+                } else {
+                    showNotification(data.error || 'Xatolik yuz berdi', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Action error:', error);
+                showNotification('Server xatosi', 'danger');
+            });
+        }
+
+        function showNotification(message, type) {
+            // Simple notification (you can enhance this)
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function getCsrfToken() {
+            // Try multiple methods to get CSRF token
+            let token = getCookie('csrftoken');
+            if (!token) {
+                // Try to get from meta tag
+                const metaTag = document.querySelector('meta[name="csrf-token"]');
+                if (metaTag) {
+                    token = metaTag.getAttribute('content');
+                }
+            }
+            if (!token) {
+                // Try to get from form
+                const form = document.querySelector('form input[name="csrfmiddlewaretoken"]');
+                if (form) {
+                    token = form.value;
+                }
+            }
+            return token || '';
+        }
+
+        // Auto-refresh stats every 30 seconds
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>
